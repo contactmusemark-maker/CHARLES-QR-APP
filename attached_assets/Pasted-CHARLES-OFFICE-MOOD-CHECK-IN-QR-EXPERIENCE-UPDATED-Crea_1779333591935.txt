@@ -1,0 +1,517 @@
+CHARLES — OFFICE MOOD CHECK-IN + QR EXPERIENCE (UPDATED)
+
+Create a premium modern web app called **“Charles”** — an emotionally intelligent office mood check-in system powered by a bonsai mascot.
+
+The system is designed for employees arriving at the office entrance.
+They scan a QR code and instantly access a calming mood check-in experience.
+
+The visual identity MUST match this existing Charles branding:
+
+* Minimal monochrome aesthetic
+* Soft warm gray background
+* Black typography
+* Tiny blue underline accent
+* Japanese zen energy
+* Calm whitespace
+* Playful bonsai mascot
+* Emotionally warm but professional
+* Rooted. Calm. Focused.
+
+The UI should feel like:
+
+* Linear + Headspace + Notion + Calm
+* Emotional wellness startup
+* Modern SaaS
+* Premium Apple-level polish
+* Zen digital garden
+
+---
+
+# UPDATED EMPLOYEE + ADMIN FLOW
+
+## EMPLOYEE FLOW
+
+Employees arrive at office entrance.
+
+A printed QR code says:
+
+# “Check in with Charles 🌱”
+
+Employees scan the QR code.
+
+The QR opens:
+
+`charles.company/mood`
+
+Immediately after QR scan:
+
+## SCREEN 0 — EMPLOYEE IDENTIFICATION
+
+Create a beautiful premium onboarding screen.
+
+### UI STYLE
+
+* Soft glassmorphism cards
+* Calm floating animations
+* Bonsai mascot welcoming employee
+* Apple-style spacing
+* Mobile-first design
+* Smooth transitions
+* Lucide React icons everywhere
+* Apple emojis used elegantly
+
+### SCREEN CONTENT
+
+Top Label:
+
+“Charles”
+
+Large headline:
+
+# “Welcome back 🌱”
+
+Subtext:
+
+“Let’s begin your day mindfully.”
+
+Then show:
+
+### Employee Form
+
+Fields:
+
+* Employee ID
+* Employee Name
+
+Use premium input fields with:
+
+* Lucide icons
+* Rounded corners
+* Floating labels
+* Soft shadows
+* Focus glow animations
+
+Examples:
+
+* Badge icon for Employee ID
+* User icon for Name
+
+Button:
+
+# “Continue ✨”
+
+Validation:
+
+* Both fields required
+* Smooth animated validation states
+* Mobile optimized keyboard support
+
+---
+
+# ADMIN LOGIN LOGIC
+
+If:
+
+Employee ID = `CCE001`
+AND
+Employee Name = `WILLIAM`
+
+Then:
+
+DO NOT open employee mood flow.
+
+Instead:
+
+Redirect directly to:
+
+# ADMIN DASHBOARD
+
+This is the master admin account.
+
+Admin should see:
+
+* Which employees checked in today
+* Employee names
+* Employee IDs
+* Mood selected
+* Energy level
+* Stress level
+* Focus level
+* Daily emotional trends
+* Department mood summaries
+* Burnout risk indicators
+* AI wellness insights
+* Daily emotional weather
+* Mood analytics charts
+* Team wellness score
+* Attendance correlation
+* Mood timeline
+
+Dashboard should feel:
+
+* Premium
+* Elegant
+* Modern SaaS
+* Bento-grid layout
+* Floating analytics cards
+* Smooth animated charts
+* Calm monochrome aesthetic
+
+Use:
+
+* Recharts
+* Framer Motion
+* Tailwind
+* shadcn/ui
+* Lucide icons
+
+Add sections like:
+
+## “How the team feels today 🌤️”
+
+## “Employees needing support 💛”
+
+## “Most positive energy today ✨”
+
+## “Stress trends this week 📈”
+
+---
+
+# EMPLOYEE MOOD FLOW
+
+If employee is NOT admin:
+
+Continue into mood check-in flow.
+
+---
+
+# SCREEN 1 — MOOD CHECK-IN PAGE (ENHANCED UI)
+
+Minimal centered hero screen.
+
+Top:
+
+Tiny label:
+
+“Charles”
+
+Large headline:
+
+# “How are you feeling today?”
+
+Subtext:
+
+“Rooted minds grow better 🌱”
+
+Center:
+
+Large animated bonsai mascot waving.
+
+Mood cards:
+
+😊 Great
+🙂 Good
+😐 Okay
+😓 Stressed
+😴 Exhausted
+
+Each mood card MUST include:
+
+* Lucide icons
+* Emoji animation
+* Glassmorphism effect
+* Hover lift interaction
+* Rounded 24px corners
+* Apple-quality shadows
+* Smooth spring transitions
+* Mobile touch feedback
+
+Use:
+
+* Framer Motion microinteractions
+* Floating animations
+* Pulse effects
+* Soft blur gradients
+
+Bottom text:
+
+“Your responses help build a healthier workplace.”
+
+---
+
+# SCREEN 2 — MOOD DETAIL EXPERIENCE
+
+After selecting mood:
+
+Background softly changes.
+
+Charles reacts emotionally.
+
+Examples:
+
+* Happy bonsai jumps slightly
+* Stressed bonsai shakes gently
+* Sleepy bonsai droops
+* Calm bonsai slowly sways
+
+Show supportive message.
+
+Examples:
+
+* “Love that energy 🌱”
+* “Take it one step at a time 💛”
+* “Glad you’re here ✨”
+* “Protect your peace today 🌿”
+* “You don’t have to rush 🌙”
+
+Add sliders:
+
+* Energy
+* Focus
+* Stress
+
+Use:
+
+* Lucide slider icons
+* Animated range sliders
+* Smooth glow effects
+
+Add quick-select tags:
+
+* Meetings
+* Deep Work
+* Burnout
+* Creative
+* Need Support
+* Social Day
+* Quiet Day
+
+Optional textarea:
+
+“Anything Charles should know?”
+
+---
+
+# SCREEN 3 — EMPLOYEE SUCCESS PAGE
+
+After employee submits mood:
+
+Show ONLY:
+
+# SUCCESS EXPERIENCE
+
+Do NOT show admin features.
+
+This page should feel calming and rewarding.
+
+### UI
+
+* Animated bonsai growth
+* Floating leaves
+* Soft gradients
+* Calm music-style atmosphere
+* Elegant whitespace
+
+Headline:
+
+# “Checked in successfully 🌱”
+
+Subtext:
+
+“Thanks for showing up honestly today.”
+
+Then display:
+
+## Employee Details
+
+* Employee ID
+* Employee Name
+
+Styled beautifully in premium glass card.
+
+Then show:
+
+# DAILY MOTIVATIONAL QUOTE ✨
+
+Examples:
+
+* “Small steps every day create lasting growth.”
+* “Protect your peace while building your future.”
+* “Calm minds create strong work.”
+* “Growth happens quietly.”
+* “You are doing better than you think.”
+
+Button:
+
+# “Start My Day 🚀”
+
+Footer:
+
+“Always growing. Always grounded.”
+
+---
+
+# QR CODE REQUIREMENTS
+
+MAKE QR SCANNING PERFECT FOR MOBILE.
+
+QR code MUST:
+
+* Scan instantly on Android and iPhone
+* Have strong contrast
+* Include safe quiet zones
+* Use high error correction
+* Remain readable when printed
+* Work from different camera angles
+* Support dark mode poster versions
+
+Generate:
+
+* A4 printable poster
+* Mobile optimized QR
+* Sticker version
+* Table stand version
+* Dark mode version
+
+Poster aesthetic:
+
+* Japanese zen minimalism
+* Large centered QR
+* Bonsai mascot beside QR
+* Calm warm gray background
+* Elegant typography
+* Massive whitespace
+* Apple-style poster composition
+
+Poster copy:
+
+# Charles 🌱
+
+## “Check in before you begin.”
+
+Subtext:
+
+“Scan to log today’s mood.”
+
+Bottom:
+
+“Rooted. Calm. Focused.”
+
+QR destination:
+
+`https://charles.company/mood`
+
+---
+
+# MOTION + INTERACTIONS
+
+Use:
+
+* Framer Motion
+* Smooth fade transitions
+* Floating animations
+* Spring interactions
+* Soft scaling effects
+* Lucide animated icons
+* Emotional bonsai reactions
+
+Examples:
+
+* Cards gently lift on hover
+* Mascot reacts emotionally
+* Buttons pulse softly
+* Gradients slowly move
+* Inputs glow on focus
+* Emoji bounce animations
+
+---
+
+# TECH STACK
+
+Build using:
+
+* React
+* Next.js
+* Tailwind CSS
+* Framer Motion
+* shadcn/ui
+* Lucide React
+* Recharts
+
+Architecture:
+
+* Production-ready
+* Component-based
+* Clean folder structure
+* Responsive
+* Mobile-first
+* Smooth performance
+* QR optimized
+
+---
+
+# REQUIRED COMPONENTS
+
+Generate:
+
+1. Employee onboarding screen
+2. QR landing page
+3. Enhanced mood cards
+4. Mood detail screen
+5. Employee success page
+6. Admin dashboard
+7. Team analytics cards
+8. QR poster designs
+9. Component library
+10. Tailwind theme
+11. Typography system
+12. Motion system
+13. Dark mode version
+14. Mobile optimized interactions
+15. QR scanning optimization
+16. Lucide icon system
+17. Employee/admin route logic
+
+---
+
+# IMPORTANT LOGIC
+
+## Employee
+
+Any normal employee:
+
+* Enter Employee ID
+* Enter Name
+* Complete mood check-in
+* See success page + quote
+
+## Admin
+
+ONLY:
+
+Employee ID: `CCE001`
+Name: `WILLIAM`
+
+Should:
+
+* Automatically open dashboard
+* Access employee analytics
+* See today’s team emotional insights
+
+---
+
+# FINAL EXPERIENCE GOAL
+
+The entire experience should feel:
+
+* Emotionally intelligent
+* Beautifully calm
+* Futuristic
+* Human-centered
+* Premium
+* Soft and mindful
+* Apple-level polished
+* Designed for mobile QR interaction
+* Elegant enough for a modern office entrance
+
+The experience should emotionally support employees while giving HR/admin meaningful wellness insights.

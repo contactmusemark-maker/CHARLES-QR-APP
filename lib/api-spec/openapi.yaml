@@ -1,22 +1,22 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Charles Mood Check-In API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: checkins
+    description: Mood check-in operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +24,185 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /checkins:
+    get:
+      operationId: listCheckins
+      tags: [checkins]
+      summary: List all check-ins (admin)
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+          description: Filter by date (YYYY-MM-DD), defaults to today
+      responses:
+        "200":
+          description: List of check-ins
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CheckIn"
+    post:
+      operationId: createCheckin
+      tags: [checkins]
+      summary: Submit a mood check-in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInInput"
+      responses:
+        "201":
+          description: Check-in created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckIn"
+
+  /checkins/summary:
+    get:
+      operationId: getCheckinSummary
+      tags: [checkins]
+      summary: Get today's mood summary for admin dashboard
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+          description: Date to summarize (YYYY-MM-DD), defaults to today
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckInSummary"
+
+  /checkins/trends:
+    get:
+      operationId: getCheckinTrends
+      tags: [checkins]
+      summary: Get mood trends for the past 7 days
+      responses:
+        "200":
+          description: 7-day mood trends
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendDay"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    CheckInInput:
+      type: object
+      required: [employeeId, employeeName, mood]
+      properties:
+        employeeId:
+          type: string
+        employeeName:
+          type: string
+        mood:
+          type: string
+          enum: [great, good, okay, stressed, exhausted]
+        energyLevel:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 10
+        focusLevel:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 10
+        stressLevel:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 10
+        tags:
+          type: array
+          items:
+            type: string
+        note:
+          type: ["string", "null"]
+
+    CheckIn:
+      type: object
+      required: [id, employeeId, employeeName, mood, checkedInAt]
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: string
+        employeeName:
+          type: string
+        mood:
+          type: string
+          enum: [great, good, okay, stressed, exhausted]
+        energyLevel:
+          type: ["integer", "null"]
+        focusLevel:
+          type: ["integer", "null"]
+        stressLevel:
+          type: ["integer", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        note:
+          type: ["string", "null"]
+        checkedInAt:
+          type: string
+          format: date-time
+
+    CheckInSummary:
+      type: object
+      required: [totalCheckins, moodBreakdown, averageEnergy, averageFocus, averageStress, teamWellnessScore, burnoutRiskCount]
+      properties:
+        totalCheckins:
+          type: integer
+        moodBreakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        averageEnergy:
+          type: number
+        averageFocus:
+          type: number
+        averageStress:
+          type: number
+        teamWellnessScore:
+          type: number
+        burnoutRiskCount:
+          type: integer
+        topPositiveEmployees:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckIn"
+        needsSupportEmployees:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckIn"
+
+    TrendDay:
+      type: object
+      required: [date, totalCheckins, dominantMood, averageWellness]
+      properties:
+        date:
+          type: string
+        totalCheckins:
+          type: integer
+        dominantMood:
+          type: string
+        averageWellness:
+          type: number

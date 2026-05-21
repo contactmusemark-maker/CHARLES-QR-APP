@@ -1,19 +1,21 @@
-# [Project name]
+# Charles — Office Mood Check-In
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A premium emotionally intelligent office mood check-in system powered by a bonsai mascot. Employees scan a QR code to log their daily mood; admins see a live wellness dashboard.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/charles run dev` — run the frontend (port 21716)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` — Postgres connection string (provisioned)
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite + Tailwind CSS + Framer Motion + shadcn/ui + Recharts
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
@@ -22,15 +24,23 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — API contract (source of truth)
+- `lib/db/src/schema/checkins.ts` — checkins table schema
+- `artifacts/charles/src/` — React frontend (pages, components, context)
+- `artifacts/api-server/src/routes/checkins.ts` — check-in API routes
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Frontend is fully frontend-only for the mood flow — state managed in React context (EmployeeContext)
+- Admin access is controlled by a simple credential check (CCE001/WILLIAM) with no server-side auth — intentional for kiosk simplicity
+- All check-ins are stored in PostgreSQL via Drizzle ORM
+- Wellness score is computed server-side from mood weights + stress penalty
+- QR code destination: root URL `/` → employee identification screen
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Employee flow**: Scan QR → enter name/ID → select mood → adjust energy/focus/stress sliders → add tags/note → see success page with motivational quote
+- **Admin flow**: Enter CCE001/WILLIAM → instant redirect to live analytics dashboard with mood charts, burnout risk indicators, wellness score, 7-day trends
 
 ## User preferences
 
@@ -38,7 +48,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Admin check is case-insensitive for both Employee ID and Name
+- The `@assets` Vite alias resolves to `attached_assets/` at the monorepo root (bonsai PNGs)
+- Always re-run codegen after changing `lib/api-spec/openapi.yaml`
 
 ## Pointers
 
