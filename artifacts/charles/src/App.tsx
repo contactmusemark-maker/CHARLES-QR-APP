@@ -12,6 +12,7 @@ import MoodDetail from "@/pages/mood-detail";
 import Success from "@/pages/success";
 import Admin from "@/pages/admin";
 import QrPoster from "@/pages/qr-poster";
+import EmployeeTrend from "@/pages/employee-trend";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ function Router() {
         <Route path="/mood/detail" component={MoodDetail} />
         <Route path="/success" component={Success} />
         <Route path="/admin" component={Admin} />
+        <Route path="/admin/employee/:employeeId" component={EmployeeTrend} />
         <Route path="/poster" component={QrPoster} />
         <Route component={NotFound} />
       </Switch>

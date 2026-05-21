@@ -23,6 +23,7 @@ import type {
   CheckIn,
   CheckInInput,
   CheckInSummary,
+  EmployeeHistory,
   GetCheckinSummaryParams,
   HealthStatus,
   ListCheckinsParams,
@@ -345,6 +346,83 @@ export function useGetCheckinSummary<TData = Awaited<ReturnType<typeof getChecki
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetCheckinSummaryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetEmployeeHistoryUrl = (employeeId: string,) => {
+
+
+
+
+  return `/api/checkins/employee/${employeeId}`
+}
+
+/**
+ * @summary Get full check-in history for a specific employee
+ */
+export const getEmployeeHistory = async (employeeId: string, options?: RequestInit): Promise<EmployeeHistory> => {
+
+  return customFetch<EmployeeHistory>(getGetEmployeeHistoryUrl(employeeId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetEmployeeHistoryQueryKey = (employeeId: string,) => {
+    return [
+    `/api/checkins/employee/${employeeId}`
+    ] as const;
+    }
+
+
+export const getGetEmployeeHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getEmployeeHistory>>, TError = ErrorType<unknown>>(employeeId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEmployeeHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEmployeeHistoryQueryKey(employeeId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEmployeeHistory>>> = ({ signal }) => getEmployeeHistory(employeeId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(employeeId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEmployeeHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetEmployeeHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getEmployeeHistory>>>
+export type GetEmployeeHistoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get full check-in history for a specific employee
+ */
+
+export function useGetEmployeeHistory<TData = Awaited<ReturnType<typeof getEmployeeHistory>>, TError = ErrorType<unknown>>(
+ employeeId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEmployeeHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetEmployeeHistoryQueryOptions(employeeId,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

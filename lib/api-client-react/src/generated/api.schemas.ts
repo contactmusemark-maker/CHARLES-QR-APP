@@ -103,6 +103,20 @@ export interface CheckInSummary {
   needsSupportEmployees?: CheckIn[];
 }
 
+export interface EmployeeHistory {
+  employeeId: string;
+  employeeName: string;
+  /** @nullable */
+  department?: string | null;
+  checkins: CheckIn[];
+  averageEnergy?: number;
+  averageFocus?: number;
+  averageStress?: number;
+  averageWellness?: number;
+  burnoutDays?: number;
+  dominantMood?: string;
+}
+
 export interface TrendDay {
   date: string;
   totalCheckins: number;

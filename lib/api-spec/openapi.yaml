@@ -82,6 +82,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/CheckInSummary"
 
+  /checkins/employee/{employeeId}:
+    get:
+      operationId: getEmployeeHistory
+      tags: [checkins]
+      summary: Get full check-in history for a specific employee
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee check-in history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeHistory"
+
   /checkins/trends:
     get:
       operationId: getCheckinTrends
@@ -214,6 +233,33 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CheckIn"
+
+    EmployeeHistory:
+      type: object
+      required: [employeeId, employeeName, checkins]
+      properties:
+        employeeId:
+          type: string
+        employeeName:
+          type: string
+        department:
+          type: ["string", "null"]
+        checkins:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckIn"
+        averageEnergy:
+          type: number
+        averageFocus:
+          type: number
+        averageStress:
+          type: number
+        averageWellness:
+          type: number
+        burnoutDays:
+          type: integer
+        dominantMood:
+          type: string
 
     TrendDay:
       type: object

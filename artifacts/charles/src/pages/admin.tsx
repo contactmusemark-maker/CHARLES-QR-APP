@@ -5,10 +5,8 @@ import { PageTransition } from "@/components/page-transition";
 import { Bonsai } from "@/components/bonsai";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
+import { format, subDays, addDays, startOfWeek, endOfWeek } from "date-fns";
 import {
   useGetCheckinSummary,
   useGetCheckinTrends,
@@ -47,6 +45,9 @@ import {
   TrendingDown,
   Minus,
   Building2,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 
 import studyBonsai from "@assets/Study_-_Work_Bonsai_1779333623328.png";
@@ -54,9 +55,10 @@ import studyBonsai from "@assets/Study_-_Work_Bonsai_1779333623328.png";
 const MOOD_COLORS: Record<string, string> = {
   Great: "#4a7c59",
   Good: "#6faa82",
+  Calm: "#8ab5a0",
   Okay: "#b8a98a",
   Stressed: "#d97c5a",
-  Exhausted: "#b55c4a",
+  Exhausted: "#8a6a6a",
 };
 
 const MOOD_EMOJI: Record<string, string> = {
@@ -156,7 +158,6 @@ export default function Admin() {
   const { employee, clearSession } = useEmployee();
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -258,34 +259,42 @@ export default function Admin() {
             <span className="text-base font-serif font-medium tracking-tight whitespace-nowrap">Charles Admin</span>
           </div>
 
-          {/* Right: actions — all on one row, never wrap */}
+          {/* Right: actions */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Date Picker */}
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 rounded-lg gap-1.5 text-xs px-3 font-normal">
-                  <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="hidden sm:inline">{isToday ? "Today" : format(selectedDate, "MMM d")}</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(d) => { if (d) { setSelectedDate(d); setCalendarOpen(false); } }}
-                  disabled={(d) => d > new Date()}
-                  initialFocus
-                />
-                {!isToday && (
-                  <div className="p-2 border-t">
-                    <Button variant="ghost" size="sm" className="w-full text-xs"
-                      onClick={() => { setSelectedDate(new Date()); setCalendarOpen(false); }}>
-                      Jump to today
-                    </Button>
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
+
+            {/* Date nav: ← [Date] → + Today pill */}
+            <div className="flex items-center gap-0.5 bg-muted/60 rounded-lg p-0.5 border border-border/50">
+              <button
+                onClick={() => setSelectedDate(d => subDays(d, 1))}
+                className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-background transition-colors"
+                title="Previous day"
+              >
+                <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <div className="flex items-center gap-1.5 px-2">
+                <CalendarIcon className="w-3 h-3 text-muted-foreground/70" />
+                <span className="text-xs font-medium whitespace-nowrap tabular-nums">
+                  {isToday ? "Today" : format(selectedDate, "MMM d")}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedDate(d => addDays(d, 1))}
+                disabled={isToday}
+                className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-background transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Next day"
+              >
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            {!isToday && (
+              <button
+                onClick={() => setSelectedDate(new Date())}
+                className="h-7 px-2.5 text-[11px] font-semibold rounded-lg bg-[#4a7c59] text-white hover:bg-[#3d6b4a] transition-colors"
+              >
+                Today
+              </button>
+            )}
 
             <Button variant="outline" size="sm" onClick={() => setReportOpen(true)}
               className="h-8 rounded-lg gap-1.5 text-xs px-3 border-blue-200 text-blue-700 hover:bg-blue-50">
@@ -614,18 +623,25 @@ export default function Admin() {
                   <div className="space-y-3">
                     {summary?.needsSupportEmployees?.length ? (
                       summary.needsSupportEmployees.map((emp) => (
-                        <div key={emp.id} className="flex items-center justify-between p-3 rounded-xl border bg-background/50">
+                        <button
+                          key={emp.id}
+                          onClick={() => setLocation(`/admin/employee/${emp.employeeId}`)}
+                          className="w-full flex items-center justify-between p-3 rounded-xl border bg-background/50 hover:bg-background/80 hover:border-[#d97c5a]/30 transition-all text-left group"
+                        >
                           <div>
-                            <p className="font-medium text-sm">{emp.employeeName}</p>
+                            <p className="font-medium text-sm group-hover:text-[#d97c5a] transition-colors flex items-center gap-1">
+                              {emp.employeeName}
+                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                            </p>
                             <p className="text-xs text-muted-foreground">{emp.employeeId}</p>
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <span className="text-xs font-medium text-red-600 px-2 py-0.5 bg-red-50 rounded-full">
+                            <span className="text-xs font-medium text-red-600 px-2 py-0.5 bg-red-50 rounded-full capitalize">
                               {emp.mood}
                             </span>
                             {emp.stressLevel && <span className="text-xs text-muted-foreground">Stress: {emp.stressLevel}/10</span>}
                           </div>
-                        </div>
+                        </button>
                       ))
                     ) : (
                       <div className="text-center py-8 text-muted-foreground text-sm">
@@ -650,18 +666,25 @@ export default function Admin() {
                   <div className="space-y-3">
                     {summary?.topPositiveEmployees?.length ? (
                       summary.topPositiveEmployees.map((emp) => (
-                        <div key={emp.id} className="flex items-center justify-between p-3 rounded-xl border bg-background/50">
+                        <button
+                          key={emp.id}
+                          onClick={() => setLocation(`/admin/employee/${emp.employeeId}`)}
+                          className="w-full flex items-center justify-between p-3 rounded-xl border bg-background/50 hover:bg-background/80 hover:border-[#4a7c59]/30 transition-all text-left group"
+                        >
                           <div>
-                            <p className="font-medium text-sm">{emp.employeeName}</p>
+                            <p className="font-medium text-sm group-hover:text-[#4a7c59] transition-colors flex items-center gap-1">
+                              {emp.employeeName}
+                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                            </p>
                             <p className="text-xs text-muted-foreground">{emp.employeeId}</p>
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <span className="text-xs font-medium text-[#4a7c59] px-2 py-0.5 bg-[#4a7c59]/10 rounded-full">
+                            <span className="text-xs font-medium text-[#4a7c59] px-2 py-0.5 bg-[#4a7c59]/10 rounded-full capitalize">
                               {emp.mood}
                             </span>
                             {emp.energyLevel && <span className="text-xs text-muted-foreground">Energy: {emp.energyLevel}/10</span>}
                           </div>
-                        </div>
+                        </button>
                       ))
                     ) : (
                       <div className="text-center py-8 text-muted-foreground text-sm">

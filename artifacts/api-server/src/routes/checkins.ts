@@ -149,6 +149,66 @@ router.get("/checkins/summary", async (req, res) => {
   });
 });
 
+// GET /checkins/employee/:employeeId
+router.get("/checkins/employee/:employeeId", async (req, res) => {
+  const { employeeId } = req.params;
+  if (!employeeId) return res.status(400).json({ error: "Missing employeeId" });
+
+  const checkins = await db
+    .select()
+    .from(checkinsTable)
+    .where(sql`LOWER(${checkinsTable.employeeId}) = LOWER(${employeeId})`)
+    .orderBy(desc(checkinsTable.checkedInAt))
+    .limit(60);
+
+  if (checkins.length === 0) {
+    return res.json({
+      employeeId,
+      employeeName: employeeId,
+      department: null,
+      checkins: [],
+      averageEnergy: 0,
+      averageFocus: 0,
+      averageStress: 0,
+      averageWellness: 0,
+      burnoutDays: 0,
+      dominantMood: "none",
+    });
+  }
+
+  const latest = checkins[0];
+  let totalEnergy = 0, energyCount = 0;
+  let totalFocus = 0, focusCount = 0;
+  let totalStress = 0, stressCount = 0;
+  let totalWellness = 0;
+  const moodCounts: Record<string, number> = {};
+  let burnoutDays = 0;
+
+  for (const c of checkins) {
+    totalWellness += moodWeights[c.mood] ?? 5;
+    moodCounts[c.mood] = (moodCounts[c.mood] ?? 0) + 1;
+    if (c.energyLevel != null) { totalEnergy += c.energyLevel; energyCount++; }
+    if (c.focusLevel != null) { totalFocus += c.focusLevel; focusCount++; }
+    if (c.stressLevel != null) { totalStress += c.stressLevel; stressCount++; }
+    if (["stressed", "exhausted"].includes(c.mood) || (c.stressLevel != null && c.stressLevel >= 8)) burnoutDays++;
+  }
+
+  const dominantMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "none";
+
+  return res.json({
+    employeeId: latest.employeeId,
+    employeeName: latest.employeeName,
+    department: latest.department,
+    checkins: checkins.map(c => ({ ...c, checkedInAt: c.checkedInAt.toISOString() })),
+    averageEnergy: energyCount > 0 ? Math.round((totalEnergy / energyCount) * 10) / 10 : 0,
+    averageFocus: focusCount > 0 ? Math.round((totalFocus / focusCount) * 10) / 10 : 0,
+    averageStress: stressCount > 0 ? Math.round((totalStress / stressCount) * 10) / 10 : 0,
+    averageWellness: Math.round((totalWellness / checkins.length) * 10) / 10,
+    burnoutDays,
+    dominantMood,
+  });
+});
+
 // GET /checkins/trends
 router.get("/checkins/trends", async (req, res) => {
   const days = [];

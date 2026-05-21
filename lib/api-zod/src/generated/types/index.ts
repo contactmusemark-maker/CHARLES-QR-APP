@@ -13,6 +13,7 @@ export * from './checkInMood';
 export * from './checkInSummary';
 export * from './checkInSummaryMoodBreakdown';
 export * from './departmentStat';
+export * from './employeeHistory';
 export * from './getCheckinSummaryParams';
 export * from './healthStatus';
 export * from './listCheckinsParams';

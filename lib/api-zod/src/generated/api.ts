@@ -114,6 +114,39 @@ export const GetCheckinSummaryResponse = zod.object({
 
 
 /**
+ * @summary Get full check-in history for a specific employee
+ */
+export const GetEmployeeHistoryParams = zod.object({
+  "employeeId": zod.coerce.string()
+})
+
+export const GetEmployeeHistoryResponse = zod.object({
+  "employeeId": zod.string(),
+  "employeeName": zod.string(),
+  "department": zod.string().nullish(),
+  "checkins": zod.array(zod.object({
+  "id": zod.number(),
+  "employeeId": zod.string(),
+  "employeeName": zod.string(),
+  "department": zod.string().nullish(),
+  "mood": zod.enum(['great', 'good', 'okay', 'calm', 'stressed', 'exhausted']),
+  "energyLevel": zod.number().nullish(),
+  "focusLevel": zod.number().nullish(),
+  "stressLevel": zod.number().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "note": zod.string().nullish(),
+  "checkedInAt": zod.coerce.date()
+})),
+  "averageEnergy": zod.number().optional(),
+  "averageFocus": zod.number().optional(),
+  "averageStress": zod.number().optional(),
+  "averageWellness": zod.number().optional(),
+  "burnoutDays": zod.number().optional(),
+  "dominantMood": zod.string().optional()
+})
+
+
+/**
  * @summary Get mood trends for the past 7 days
  */
 export const GetCheckinTrendsResponseItem = zod.object({
