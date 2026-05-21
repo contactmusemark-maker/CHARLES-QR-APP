@@ -10,7 +10,10 @@ export default function QrPoster() {
   const [, setLocation] = useLocation();
   const posterRef = useRef<HTMLDivElement>(null);
 
-  const checkInUrl = `${window.location.origin}/`;
+  const checkInUrl = (
+    (import.meta.env.VITE_PUBLIC_APP_URL as string | undefined) ??
+    "https://charlescheckin.inkaastudio.com"
+  ).replace(/\/+$/, "");
 
   const handlePrint = () => {
     window.print();
