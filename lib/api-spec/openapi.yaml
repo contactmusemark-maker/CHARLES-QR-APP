@@ -38,6 +38,11 @@ paths:
           schema:
             type: string
           description: Filter by date (YYYY-MM-DD), defaults to today
+        - in: query
+          name: tzOffsetMinutes
+          schema:
+            type: integer
+          description: Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping
       responses:
         "200":
           description: List of check-ins
@@ -76,6 +81,11 @@ paths:
           schema:
             type: string
           description: Date to summarize (YYYY-MM-DD), defaults to today
+        - in: query
+          name: tzOffsetMinutes
+          schema:
+            type: integer
+          description: Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping
       responses:
         "200":
           description: Dashboard summary
@@ -108,6 +118,12 @@ paths:
       operationId: getCheckinTrends
       tags: [checkins]
       summary: Get mood trends for the past 7 days
+      parameters:
+        - in: query
+          name: tzOffsetMinutes
+          schema:
+            type: integer
+          description: Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping
       responses:
         "200":
           description: 7-day mood trends

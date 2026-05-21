@@ -157,6 +157,10 @@ export type ListCheckinsParams = {
  * Filter by date (YYYY-MM-DD), defaults to today
  */
 date?: string;
+/**
+ * Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping
+ */
+tzOffsetMinutes?: number;
 };
 
 export type GetCheckinSummaryParams = {
@@ -164,6 +168,17 @@ export type GetCheckinSummaryParams = {
  * Date to summarize (YYYY-MM-DD), defaults to today
  */
 date?: string;
+/**
+ * Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping
+ */
+tzOffsetMinutes?: number;
+};
+
+export type GetCheckinTrendsParams = {
+/**
+ * Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping
+ */
+tzOffsetMinutes?: number;
 };
 
 export type GetEmployeeProfile404 = {

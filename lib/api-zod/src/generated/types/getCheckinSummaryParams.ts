@@ -11,4 +11,8 @@ export type GetCheckinSummaryParams = {
  * Date to summarize (YYYY-MM-DD), defaults to today
  */
 date?: string;
+/**
+ * Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping
+ */
+tzOffsetMinutes?: number;
 };

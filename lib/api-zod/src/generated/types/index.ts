@@ -17,6 +17,7 @@ export * from './employeeHistory';
 export * from './employeeProfile';
 export * from './employeeProfileInput';
 export * from './getCheckinSummaryParams';
+export * from './getCheckinTrendsParams';
 export * from './getEmployeeProfile404';
 export * from './healthStatus';
 export * from './listCheckinsParams';

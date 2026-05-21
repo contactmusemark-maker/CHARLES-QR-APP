@@ -20,7 +20,8 @@ export const HealthCheckResponse = zod.object({
  * @summary List all check-ins (admin)
  */
 export const ListCheckinsQueryParams = zod.object({
-  "date": zod.coerce.string().optional().describe('Filter by date (YYYY-MM-DD), defaults to today')
+  "date": zod.coerce.string().optional().describe('Filter by date (YYYY-MM-DD), defaults to today'),
+  "tzOffsetMinutes": zod.coerce.number().optional().describe('Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping')
 })
 
 export const ListCheckinsResponseItem = zod.object({
@@ -67,7 +68,8 @@ export const CreateCheckinBody = zod.object({
  * @summary Get today's mood summary for admin dashboard
  */
 export const GetCheckinSummaryQueryParams = zod.object({
-  "date": zod.coerce.string().optional().describe('Date to summarize (YYYY-MM-DD), defaults to today')
+  "date": zod.coerce.string().optional().describe('Date to summarize (YYYY-MM-DD), defaults to today'),
+  "tzOffsetMinutes": zod.coerce.number().optional().describe('Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping')
 })
 
 export const GetCheckinSummaryResponse = zod.object({
@@ -148,6 +150,10 @@ export const GetEmployeeHistoryResponse = zod.object({
 /**
  * @summary Get mood trends for the past 7 days
  */
+export const GetCheckinTrendsQueryParams = zod.object({
+  "tzOffsetMinutes": zod.coerce.number().optional().describe('Browser timezone offset in minutes (Date.getTimezoneOffset()) for correct local-day grouping')
+})
+
 export const GetCheckinTrendsResponseItem = zod.object({
   "date": zod.string(),
   "totalCheckins": zod.number(),

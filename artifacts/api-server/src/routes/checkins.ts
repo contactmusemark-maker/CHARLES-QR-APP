@@ -6,10 +6,16 @@ import {
   CreateCheckinBody,
   GetCheckinSummaryQueryParams,
 } from "@workspace/api-zod";
+import { localDateToUtcRange, parseTzOffsetMinutes } from "../lib/timezone";
 
 const router = Router();
 
-function getDateRange(dateStr?: string): { start: Date; end: Date } {
+function getDateRange(dateStr?: string, tzOffsetMinutes?: number | null): { start: Date; end: Date } {
+  if (dateStr && typeof tzOffsetMinutes === "number") {
+    return localDateToUtcRange(dateStr, tzOffsetMinutes);
+  }
+
+  // Back-compat fallback: interpret in server local timezone.
   const d = dateStr ? new Date(dateStr) : new Date();
   const start = new Date(d);
   start.setHours(0, 0, 0, 0);
@@ -32,7 +38,8 @@ router.get("/checkins", async (req, res) => {
   const parsed = ListCheckinsQueryParams.safeParse(req.query);
   if (!parsed.success) return res.status(400).json({ error: "Invalid query params" });
 
-  const { start, end } = getDateRange(parsed.data.date);
+  const tzOffsetMinutes = parseTzOffsetMinutes(req.query["tzOffsetMinutes"]);
+  const { start, end } = getDateRange(parsed.data.date, tzOffsetMinutes);
   const checkins = await db
     .select()
     .from(checkinsTable)
@@ -71,7 +78,8 @@ router.get("/checkins/summary", async (req, res) => {
   const parsed = GetCheckinSummaryQueryParams.safeParse(req.query);
   if (!parsed.success) return res.status(400).json({ error: "Invalid query params" });
 
-  const { start, end } = getDateRange(parsed.data.date);
+  const tzOffsetMinutes = parseTzOffsetMinutes(req.query["tzOffsetMinutes"]);
+  const { start, end } = getDateRange(parsed.data.date, tzOffsetMinutes);
   const checkins = await db
     .select()
     .from(checkinsTable)
@@ -212,12 +220,19 @@ router.get("/checkins/employee/:employeeId", async (req, res) => {
 // GET /checkins/trends
 router.get("/checkins/trends", async (req, res) => {
   const days = [];
+  const tzOffsetMinutes = parseTzOffsetMinutes(req.query["tzOffsetMinutes"]);
+  // When tz offset is provided, compute "today" relative to that local timezone by shifting
+  // now into the client's local wall-clock before deriving YYYY-MM-DD via toISOString().
+  const baseNow = new Date();
+  const baseMs =
+    typeof tzOffsetMinutes === "number" ? baseNow.getTime() + tzOffsetMinutes * 60_000 : baseNow.getTime();
+  const base = new Date(baseMs);
 
   for (let i = 6; i >= 0; i--) {
-    const d = new Date();
+    const d = new Date(base);
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().split("T")[0];
-    const { start, end } = getDateRange(dateStr);
+    const { start, end } = getDateRange(dateStr, tzOffsetMinutes);
 
     const dayCheckins = await db
       .select()

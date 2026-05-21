@@ -61,6 +61,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import studyBonsai from "@assets/Study_-_Work_Bonsai_1779333623328.png";
 import { isAdminAuthed, setAdminAuthed } from "@/lib/admin-auth";
+import { formatLocalDateKey, getTzOffsetMinutes, isSameLocalDate } from "@/lib/dates";
 
 const MOOD_COLORS: Record<string, string> = {
   Great: "#4a7c59",
@@ -181,8 +182,9 @@ export default function Admin() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileEmployeeId, setProfileEmployeeId] = useState<string | null>(null);
 
-  const dateParam = format(selectedDate, "yyyy-MM-dd");
-  const isToday = dateParam === format(new Date(), "yyyy-MM-dd");
+  const dateParam = formatLocalDateKey(selectedDate);
+  const isToday = isSameLocalDate(selectedDate, new Date());
+  const tzOffsetMinutes = getTzOffsetMinutes();
 
   useEffect(() => {
     if (!allowed) {
@@ -191,17 +193,23 @@ export default function Admin() {
   }, [allowed, setLocation]);
 
   const { data: summary, isLoading: isLoadingSummary } = useGetCheckinSummary(
-    { date: dateParam },
-    { query: { queryKey: getGetCheckinSummaryQueryKey({ date: dateParam }), enabled: allowed } }
+    { date: dateParam, tzOffsetMinutes },
+    {
+      query: {
+        queryKey: getGetCheckinSummaryQueryKey({ date: dateParam, tzOffsetMinutes }),
+        enabled: allowed,
+      },
+    }
   );
 
-  const { data: trends, isLoading: isLoadingTrends } = useGetCheckinTrends({
-    query: { queryKey: getGetCheckinTrendsQueryKey(), enabled: allowed },
-  });
+  const { data: trends, isLoading: isLoadingTrends } = useGetCheckinTrends(
+    { tzOffsetMinutes },
+    { query: { queryKey: getGetCheckinTrendsQueryKey({ tzOffsetMinutes }), enabled: allowed } },
+  );
 
   const { data: checkins, isLoading: isLoadingCheckins } = useListCheckins(
-    { date: dateParam },
-    { query: { queryKey: getListCheckinsQueryKey({ date: dateParam }), enabled: allowed } }
+    { date: dateParam, tzOffsetMinutes },
+    { query: { queryKey: getListCheckinsQueryKey({ date: dateParam, tzOffsetMinutes }), enabled: allowed } }
   );
 
   const activeProfileId = profileEmployeeId ?? "";

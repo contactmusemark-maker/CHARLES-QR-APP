@@ -27,6 +27,7 @@ import type {
   EmployeeProfile,
   EmployeeProfileInput,
   GetCheckinSummaryParams,
+  GetCheckinTrendsParams,
   GetEmployeeProfile404,
   HealthStatus,
   ListCheckinsParams,
@@ -438,20 +439,27 @@ export function useGetEmployeeHistory<TData = Awaited<ReturnType<typeof getEmplo
 
 
 
-export const getGetCheckinTrendsUrl = () => {
+export const getGetCheckinTrendsUrl = (params?: GetCheckinTrendsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/checkins/trends`
+  return stringifiedParams.length > 0 ? `/api/checkins/trends?${stringifiedParams}` : `/api/checkins/trends`
 }
 
 /**
  * @summary Get mood trends for the past 7 days
  */
-export const getCheckinTrends = async ( options?: RequestInit): Promise<TrendDay[]> => {
+export const getCheckinTrends = async (params?: GetCheckinTrendsParams, options?: RequestInit): Promise<TrendDay[]> => {
 
-  return customFetch<TrendDay[]>(getGetCheckinTrendsUrl(),
+  return customFetch<TrendDay[]>(getGetCheckinTrendsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -464,23 +472,23 @@ export const getCheckinTrends = async ( options?: RequestInit): Promise<TrendDay
 
 
 
-export const getGetCheckinTrendsQueryKey = () => {
+export const getGetCheckinTrendsQueryKey = (params?: GetCheckinTrendsParams,) => {
     return [
-    `/api/checkins/trends`
+    `/api/checkins/trends`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetCheckinTrendsQueryOptions = <TData = Awaited<ReturnType<typeof getCheckinTrends>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCheckinTrends>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetCheckinTrendsQueryOptions = <TData = Awaited<ReturnType<typeof getCheckinTrends>>, TError = ErrorType<unknown>>(params?: GetCheckinTrendsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCheckinTrends>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetCheckinTrendsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetCheckinTrendsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCheckinTrends>>> = ({ signal }) => getCheckinTrends({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCheckinTrends>>> = ({ signal }) => getCheckinTrends(params, { signal, ...requestOptions });
 
 
 
@@ -498,11 +506,11 @@ export type GetCheckinTrendsQueryError = ErrorType<unknown>
  */
 
 export function useGetCheckinTrends<TData = Awaited<ReturnType<typeof getCheckinTrends>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCheckinTrends>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetCheckinTrendsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCheckinTrends>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetCheckinTrendsQueryOptions(options)
+  const queryOptions = getGetCheckinTrendsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
