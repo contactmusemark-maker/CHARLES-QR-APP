@@ -5,6 +5,8 @@ import { PageTransition } from "@/components/page-transition";
 import { Bonsai } from "@/components/bonsai";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { format, subDays, addDays, startOfWeek, endOfWeek } from "date-fns";
 import {
@@ -158,6 +160,7 @@ export default function Admin() {
   const { employee, clearSession } = useEmployee();
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -262,7 +265,7 @@ export default function Admin() {
           {/* Right: actions */}
           <div className="flex items-center gap-1.5 shrink-0">
 
-            {/* Date nav: ← [Date] → + Today pill */}
+            {/* Date nav: ← [Date clickable] → */}
             <div className="flex items-center gap-0.5 bg-muted/60 rounded-lg p-0.5 border border-border/50">
               <button
                 onClick={() => setSelectedDate(d => subDays(d, 1))}
@@ -271,12 +274,39 @@ export default function Admin() {
               >
                 <ChevronLeft className="w-4 h-4 text-muted-foreground" />
               </button>
-              <div className="flex items-center gap-1.5 px-2">
-                <CalendarIcon className="w-3 h-3 text-muted-foreground/70" />
-                <span className="text-xs font-medium whitespace-nowrap tabular-nums">
-                  {isToday ? "Today" : format(selectedDate, "MMM d")}
-                </span>
-              </div>
+
+              {/* Clickable date — opens calendar picker */}
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-2 h-7 rounded-md hover:bg-background transition-colors group">
+                    <CalendarIcon className="w-3 h-3 text-muted-foreground/70 group-hover:text-[#4a7c59] transition-colors" />
+                    <span className="text-xs font-medium whitespace-nowrap tabular-nums group-hover:text-[#4a7c59] transition-colors">
+                      {isToday ? "Today" : format(selectedDate, "MMM d")}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 shadow-xl rounded-2xl border-border/50" align="center" sideOffset={8}>
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(d) => { if (d) { setSelectedDate(d); setCalendarOpen(false); } }}
+                    disabled={(d) => d > new Date()}
+                    initialFocus
+                    className="rounded-2xl"
+                  />
+                  {!isToday && (
+                    <div className="px-3 pb-3">
+                      <button
+                        onClick={() => { setSelectedDate(new Date()); setCalendarOpen(false); }}
+                        className="w-full h-8 rounded-xl bg-[#4a7c59] text-white text-xs font-semibold hover:bg-[#3d6b4a] transition-colors"
+                      >
+                        Jump to Today
+                      </button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+
               <button
                 onClick={() => setSelectedDate(d => addDays(d, 1))}
                 disabled={isToday}

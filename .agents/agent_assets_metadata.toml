@@ -6,3 +6,9 @@ id = "N6Y398VfvPMmpY5eRAAJ6"
 uri = "file://charles-app.tar.gz"
 type = "unspecified"
 title = "Charles App — Source Code (.tar.gz)"
+
+[[outputs]]
+id = "J6rTtubmueufIBYAdXhqO"
+uri = "file://scripts/SUPABASE_SETUP.md"
+type = "text"
+title = "Supabase Setup Guide"
