@@ -59,7 +59,7 @@ export default function Welcome() {
     if (employeeId.trim().toUpperCase() === "CCE001" && employeeName.trim().toUpperCase() === "WILLIAM") {
       setLocation("/admin");
     } else {
-      setLocation("/mood");
+      setLocation("/employee/welcome");
     }
   };
 
