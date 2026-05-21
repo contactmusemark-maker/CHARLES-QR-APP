@@ -5,6 +5,7 @@ import { Leaf, Sprout, Focus } from "lucide-react";
 import { useEmployee } from "@/context/employee-context";
 import { Bonsai } from "@/components/bonsai";
 import { MiniLeafMark } from "@/components/mini-leaf-mark";
+import { PixelMascot } from "@/components/pixel-mascot";
 
 import welcomeBonsai from "@assets/Happy_Wave_Bonsai_1779333623327.png";
 
@@ -75,7 +76,10 @@ export default function EmployeeWelcome() {
           transition={{ delay: 0.04, duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
           className="w-full flex flex-col items-center"
         >
-          <MiniLeafMark className="w-7 h-7 sm:w-8 sm:h-8" />
+          <div className="flex items-center justify-center gap-3">
+            <MiniLeafMark className="w-7 h-7 sm:w-8 sm:h-8" />
+            <PixelMascot size={26} className="text-[#1f3a2b]" />
+          </div>
           <div className="mt-2 flex items-center justify-center gap-3">
             <div className="h-px w-12 sm:w-14 bg-[#4a7c59]/45" />
             <span className="font-serif text-[12px] tracking-[0.42em] text-[#6b7280] uppercase">
