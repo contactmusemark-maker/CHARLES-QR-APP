@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "N6Y398VfvPMmpY5eRAAJ6"
+uri = "file://charles-app.tar.gz"
+type = "unspecified"
+title = "Charles App — Source Code (.tar.gz)"
