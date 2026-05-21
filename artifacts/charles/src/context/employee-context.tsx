@@ -3,6 +3,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 interface Employee {
   id: string;
   name: string;
+  department: string;
 }
 
 interface EmployeeContextType {

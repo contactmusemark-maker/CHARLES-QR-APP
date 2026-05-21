@@ -16,6 +16,7 @@ export const CheckInInputMood = {
   great: 'great',
   good: 'good',
   okay: 'okay',
+  calm: 'calm',
   stressed: 'stressed',
   exhausted: 'exhausted',
 } as const;
@@ -23,6 +24,8 @@ export const CheckInInputMood = {
 export interface CheckInInput {
   employeeId: string;
   employeeName: string;
+  /** @nullable */
+  department?: string | null;
   mood: CheckInInputMood;
   /**
      * @minimum 1
@@ -54,6 +57,7 @@ export const CheckInMood = {
   great: 'great',
   good: 'good',
   okay: 'okay',
+  calm: 'calm',
   stressed: 'stressed',
   exhausted: 'exhausted',
 } as const;
@@ -62,6 +66,8 @@ export interface CheckIn {
   id: number;
   employeeId: string;
   employeeName: string;
+  /** @nullable */
+  department?: string | null;
   mood: CheckInMood;
   /** @nullable */
   energyLevel?: number | null;
@@ -75,6 +81,13 @@ export interface CheckIn {
   checkedInAt: string;
 }
 
+export interface DepartmentStat {
+  department: string;
+  count: number;
+  averageWellness: number;
+  dominantMood: string;
+}
+
 export type CheckInSummaryMoodBreakdown = {[key: string]: number};
 
 export interface CheckInSummary {
@@ -85,6 +98,7 @@ export interface CheckInSummary {
   averageStress: number;
   teamWellnessScore: number;
   burnoutRiskCount: number;
+  departmentBreakdown: DepartmentStat[];
   topPositiveEmployees?: CheckIn[];
   needsSupportEmployees?: CheckIn[];
 }

@@ -10,6 +10,8 @@ import type { CheckInInputMood } from './checkInInputMood';
 export interface CheckInInput {
   employeeId: string;
   employeeName: string;
+  /** @nullable */
+  department?: string | null;
   mood: CheckInInputMood;
   /**
      * @minimum 1

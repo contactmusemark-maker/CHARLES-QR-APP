@@ -46,6 +46,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Building2,
 } from "lucide-react";
 
 import studyBonsai from "@assets/Study_-_Work_Bonsai_1779333623328.png";
@@ -76,8 +77,8 @@ function generateWeeklyReport(
     averageEnergy: number;
     averageFocus: number;
     averageStress: number;
-    topPositiveEmployees: { employeeName: string; employeeId: string; mood: string; energyLevel?: number | null }[];
-    needsSupportEmployees: { employeeName: string; employeeId: string; mood: string; stressLevel?: number | null }[];
+    topPositiveEmployees?: { employeeName: string; employeeId: string; mood: string; energyLevel?: number | null }[];
+    needsSupportEmployees?: { employeeName: string; employeeId: string; mood: string; stressLevel?: number | null }[];
     moodBreakdown: Record<string, number>;
   } | undefined
 ): string {
@@ -250,42 +251,35 @@ export default function Admin() {
 
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-4 md:px-8 max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <Bonsai src={studyBonsai} alt="Charles working" className="w-10 h-10" floating={false} />
-            <h1 className="text-xl font-serif font-medium tracking-tight">Charles Admin</h1>
+        <div className="flex h-14 items-center justify-between px-4 md:px-6 max-w-7xl mx-auto gap-3">
+          {/* Left: brand */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Bonsai src={studyBonsai} alt="Charles working" className="w-8 h-8" floating={false} />
+            <span className="text-base font-serif font-medium tracking-tight whitespace-nowrap">Charles Admin</span>
           </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+
+          {/* Right: actions — all on one row, never wrap */}
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Date Picker */}
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full gap-2 text-sm font-normal min-w-[160px] justify-start"
-                >
-                  <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                  <span>{isToday ? "Today" : format(selectedDate, "MMM d, yyyy")}</span>
+                <Button variant="outline" size="sm" className="h-8 rounded-lg gap-1.5 text-xs px-3 font-normal">
+                  <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="hidden sm:inline">{isToday ? "Today" : format(selectedDate, "MMM d")}</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={(d) => {
-                    if (d) { setSelectedDate(d); setCalendarOpen(false); }
-                  }}
+                  onSelect={(d) => { if (d) { setSelectedDate(d); setCalendarOpen(false); } }}
                   disabled={(d) => d > new Date()}
                   initialFocus
                 />
                 {!isToday && (
                   <div className="p-2 border-t">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-xs"
-                      onClick={() => { setSelectedDate(new Date()); setCalendarOpen(false); }}
-                    >
+                    <Button variant="ghost" size="sm" className="w-full text-xs"
+                      onClick={() => { setSelectedDate(new Date()); setCalendarOpen(false); }}>
                       Jump to today
                     </Button>
                   </div>
@@ -293,29 +287,22 @@ export default function Admin() {
               </PopoverContent>
             </Popover>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setReportOpen(true)}
-              className="rounded-full border-blue-200 text-blue-700 hover:bg-blue-50 gap-2"
-            >
-              <Mail className="w-4 h-4" />
-              <span className="hidden sm:inline">Weekly Report</span>
+            <Button variant="outline" size="sm" onClick={() => setReportOpen(true)}
+              className="h-8 rounded-lg gap-1.5 text-xs px-3 border-blue-200 text-blue-700 hover:bg-blue-50">
+              <Mail className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Report</span>
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setLocation("/poster")}
-              className="rounded-full border-[#4a7c59]/30 text-[#4a7c59] hover:bg-[#4a7c59]/10 gap-2"
-            >
-              <QrCode className="w-4 h-4" />
-              <span className="hidden sm:inline">QR Poster</span>
+            <Button variant="outline" size="sm" onClick={() => setLocation("/poster")}
+              className="h-8 rounded-lg gap-1.5 text-xs px-3 border-[#4a7c59]/30 text-[#4a7c59] hover:bg-[#4a7c59]/10">
+              <QrCode className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">QR</span>
             </Button>
 
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="rounded-full gap-2">
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
+            <Button variant="ghost" size="sm" onClick={handleSignOut}
+              className="h-8 rounded-lg gap-1.5 text-xs px-3">
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Out</span>
             </Button>
           </div>
         </div>
@@ -547,6 +534,66 @@ export default function Admin() {
                       })}
                     </tbody>
                   </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Department Breakdown */}
+          <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-lg font-serif flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-muted-foreground" />
+                Department Wellness
+              </CardTitle>
+              <CardDescription>Wellness score and mood per team</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingSummary ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : !summary?.departmentBreakdown?.length ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  No department data for this day.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {summary.departmentBreakdown.map((dept) => {
+                    const pct = Math.round((dept.averageWellness / 10) * 100);
+                    const moodColor = MOOD_COLORS[dept.dominantMood.charAt(0).toUpperCase() + dept.dominantMood.slice(1)] ?? "#888";
+                    return (
+                      <div key={dept.department} className="flex items-center gap-4 p-3 rounded-xl border bg-background/40">
+                        <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${moodColor}20` }}>
+                          <Building2 className="w-4 h-4" style={{ color: moodColor }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-sm font-medium truncate">{dept.department}</span>
+                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                              <span
+                                className="text-[11px] font-medium px-2 py-0.5 rounded-full text-white"
+                                style={{ backgroundColor: moodColor }}
+                              >
+                                {dept.dominantMood}
+                              </span>
+                              <span className="text-xs text-muted-foreground tabular-nums">{dept.count} {dept.count === 1 ? "person" : "people"}</span>
+                            </div>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${pct}%`, backgroundColor: moodColor }}
+                            />
+                          </div>
+                          <div className="flex justify-between mt-1">
+                            <span className="text-[11px] text-muted-foreground">Wellness</span>
+                            <span className="text-[11px] font-medium tabular-nums">{dept.averageWellness.toFixed(1)}/10</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

@@ -6,6 +6,7 @@ export const checkinsTable = pgTable("checkins", {
   id: serial("id").primaryKey(),
   employeeId: text("employee_id").notNull(),
   employeeName: text("employee_name").notNull(),
+  department: text("department"),
   mood: text("mood").notNull(),
   energyLevel: integer("energy_level"),
   focusLevel: integer("focus_level"),

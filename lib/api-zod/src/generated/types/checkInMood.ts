@@ -13,6 +13,7 @@ export const CheckInMood = {
   great: 'great',
   good: 'good',
   okay: 'okay',
+  calm: 'calm',
   stressed: 'stressed',
   exhausted: 'exhausted',
 } as const;

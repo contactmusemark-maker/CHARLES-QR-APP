@@ -7,6 +7,7 @@
  */
 import type { CheckIn } from './checkIn';
 import type { CheckInSummaryMoodBreakdown } from './checkInSummaryMoodBreakdown';
+import type { DepartmentStat } from './departmentStat';
 
 export interface CheckInSummary {
   totalCheckins: number;
@@ -16,6 +17,7 @@ export interface CheckInSummary {
   averageStress: number;
   teamWellnessScore: number;
   burnoutRiskCount: number;
+  departmentBreakdown: DepartmentStat[];
   topPositiveEmployees?: CheckIn[];
   needsSupportEmployees?: CheckIn[];
 }

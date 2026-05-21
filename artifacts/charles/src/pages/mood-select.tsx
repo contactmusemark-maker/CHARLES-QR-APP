@@ -3,18 +3,66 @@ import { motion } from "framer-motion";
 import { useEmployee } from "@/context/employee-context";
 import { PageTransition } from "@/components/page-transition";
 import { Bonsai } from "@/components/bonsai";
-import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
-import { Smile, ThumbsUp, Meh, Frown, Coffee } from "lucide-react";
+import { Smile, ThumbsUp, Meh, Frown, Coffee, Leaf } from "lucide-react";
 
 import curiousBonsai from "@assets/Curious_Bonsai_1779333623327.png";
 
 const MOODS = [
-  { id: "great", label: "Great", icon: Smile, color: "bg-primary text-primary-foreground hover:bg-primary/90" },
-  { id: "good", label: "Good", icon: ThumbsUp, color: "bg-primary/80 text-primary-foreground hover:bg-primary/70" },
-  { id: "okay", label: "Okay", icon: Meh, color: "bg-secondary text-secondary-foreground hover:bg-secondary/90" },
-  { id: "stressed", label: "Stressed", icon: Frown, color: "bg-accent text-accent-foreground hover:bg-accent/90" },
-  { id: "exhausted", label: "Exhausted", icon: Coffee, color: "bg-muted text-muted-foreground hover:bg-muted/90" },
+  {
+    id: "great",
+    label: "Great",
+    icon: Smile,
+    bg: "bg-[#4a7c59]",
+    text: "text-white",
+    ring: "hover:ring-[#4a7c59]/40",
+    description: "Thriving",
+  },
+  {
+    id: "good",
+    label: "Good",
+    icon: ThumbsUp,
+    bg: "bg-[#6faa82]",
+    text: "text-white",
+    ring: "hover:ring-[#6faa82]/40",
+    description: "Positive",
+  },
+  {
+    id: "calm",
+    label: "Calm",
+    icon: Leaf,
+    bg: "bg-[#8ab5a0]",
+    text: "text-white",
+    ring: "hover:ring-[#8ab5a0]/40",
+    description: "Peaceful",
+  },
+  {
+    id: "okay",
+    label: "Okay",
+    icon: Meh,
+    bg: "bg-[#b8a98a]",
+    text: "text-white",
+    ring: "hover:ring-[#b8a98a]/40",
+    description: "Steady",
+  },
+  {
+    id: "stressed",
+    label: "Stressed",
+    icon: Frown,
+    bg: "bg-[#d97c5a]",
+    text: "text-white",
+    ring: "hover:ring-[#d97c5a]/40",
+    description: "Tense",
+  },
+  {
+    id: "exhausted",
+    label: "Exhausted",
+    icon: Coffee,
+    bg: "bg-[#8a6a6a]",
+    text: "text-white",
+    ring: "hover:ring-[#8a6a6a]/40",
+    description: "Drained",
+  },
 ];
 
 export default function MoodSelect() {
@@ -22,9 +70,7 @@ export default function MoodSelect() {
   const { employee, setSelectedMood } = useEmployee();
 
   useEffect(() => {
-    if (!employee) {
-      setLocation("/");
-    }
+    if (!employee) setLocation("/");
   }, [employee, setLocation]);
 
   if (!employee) return null;
@@ -35,25 +81,25 @@ export default function MoodSelect() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background overflow-hidden relative">
-      <div className="absolute inset-0 pointer-events-none opacity-50 bg-[radial-gradient(circle_at_50%_50%,_hsl(var(--primary)/0.05)_0%,_transparent_50%)]" />
-      
-      <PageTransition className="w-full max-w-4xl px-6 z-10">
-        <div className="flex flex-col items-center mb-12">
-          <Bonsai 
-            src={curiousBonsai} 
-            alt="Charles curious about your mood" 
-            className="w-48 h-48 mb-6" 
+    <div className="min-h-screen w-full flex items-center justify-center bg-background overflow-hidden relative px-6 py-12">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_0%,_hsl(var(--primary)/0.06)_0%,_transparent_60%)]" />
+
+      <PageTransition className="w-full max-w-2xl z-10">
+        <div className="flex flex-col items-center mb-10">
+          <Bonsai
+            src={curiousBonsai}
+            alt="Charles curious about your mood"
+            className="w-44 h-44 mb-5"
           />
           <h1 className="text-3xl md:text-4xl font-serif tracking-tight text-foreground text-center mb-2">
-            Hi {employee.name.split(' ')[0]}. How are you feeling today?
+            Hi {employee.name.split(" ")[0]}. How are you feeling?
           </h1>
-          <p className="text-muted-foreground text-center">
-            Select the mood that best matches your energy right now.
+          <p className="text-sm text-muted-foreground text-center">
+            Pick the mood that best matches where you are right now.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
           {MOODS.map((mood, index) => {
             const Icon = mood.icon;
             return (
@@ -61,20 +107,27 @@ export default function MoodSelect() {
                 key={mood.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1, ease: "easeOut" }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                transition={{ delay: index * 0.07, ease: "easeOut" }}
+                whileHover={{ y: -6, scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => handleSelectMood(mood.id)}
-                className={`glass-card p-6 rounded-2xl flex flex-col items-center justify-center gap-4 transition-all hover:shadow-lg ${mood.id === "great" || mood.id === "good" ? "hover:border-primary/50" : mood.id === "stressed" ? "hover:border-destructive/50" : "hover:border-accent/50"}`}
+                className={`group flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-white/70 backdrop-blur-sm border border-white/80 shadow-sm hover:shadow-lg transition-all ring-2 ring-transparent ${mood.ring}`}
               >
-                <div className={`p-4 rounded-full ${mood.color}`}>
-                  <Icon className="w-8 h-8" />
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${mood.bg} shadow-md`}>
+                  <Icon className={`w-6 h-6 ${mood.text}`} strokeWidth={2} />
                 </div>
-                <span className="font-medium text-foreground">{mood.label}</span>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-foreground">{mood.label}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{mood.description}</p>
+                </div>
               </motion.button>
             );
           })}
         </div>
+
+        <p className="text-center text-xs text-muted-foreground/60 mt-8">
+          Your responses help build a healthier workplace.
+        </p>
       </PageTransition>
     </div>
   );

@@ -114,9 +114,11 @@ components:
           type: string
         employeeName:
           type: string
+        department:
+          type: ["string", "null"]
         mood:
           type: string
-          enum: [great, good, okay, stressed, exhausted]
+          enum: [great, good, okay, calm, stressed, exhausted]
         energyLevel:
           type: ["integer", "null"]
           minimum: 1
@@ -146,9 +148,11 @@ components:
           type: string
         employeeName:
           type: string
+        department:
+          type: ["string", "null"]
         mood:
           type: string
-          enum: [great, good, okay, stressed, exhausted]
+          enum: [great, good, okay, calm, stressed, exhausted]
         energyLevel:
           type: ["integer", "null"]
         focusLevel:
@@ -165,9 +169,22 @@ components:
           type: string
           format: date-time
 
+    DepartmentStat:
+      type: object
+      required: [department, count, averageWellness, dominantMood]
+      properties:
+        department:
+          type: string
+        count:
+          type: integer
+        averageWellness:
+          type: number
+        dominantMood:
+          type: string
+
     CheckInSummary:
       type: object
-      required: [totalCheckins, moodBreakdown, averageEnergy, averageFocus, averageStress, teamWellnessScore, burnoutRiskCount]
+      required: [totalCheckins, moodBreakdown, averageEnergy, averageFocus, averageStress, teamWellnessScore, burnoutRiskCount, departmentBreakdown]
       properties:
         totalCheckins:
           type: integer
@@ -185,6 +202,10 @@ components:
           type: number
         burnoutRiskCount:
           type: integer
+        departmentBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/DepartmentStat"
         topPositiveEmployees:
           type: array
           items:

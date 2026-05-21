@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, checkinsTable } from "@workspace/db";
-import { desc, eq, gte, lte, sql } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import {
   ListCheckinsQueryParams,
   CreateCheckinBody,
@@ -18,37 +18,34 @@ function getDateRange(dateStr?: string): { start: Date; end: Date } {
   return { start, end };
 }
 
+const moodWeights: Record<string, number> = {
+  great: 10,
+  good: 8,
+  calm: 7,
+  okay: 6,
+  stressed: 3,
+  exhausted: 2,
+};
+
 // GET /checkins
 router.get("/checkins", async (req, res) => {
   const parsed = ListCheckinsQueryParams.safeParse(req.query);
-  if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid query params" });
-  }
+  if (!parsed.success) return res.status(400).json({ error: "Invalid query params" });
 
   const { start, end } = getDateRange(parsed.data.date);
-
   const checkins = await db
     .select()
     .from(checkinsTable)
-    .where(
-      sql`${checkinsTable.checkedInAt} >= ${start} AND ${checkinsTable.checkedInAt} <= ${end}`
-    )
+    .where(sql`${checkinsTable.checkedInAt} >= ${start} AND ${checkinsTable.checkedInAt} <= ${end}`)
     .orderBy(desc(checkinsTable.checkedInAt));
 
-  return res.json(
-    checkins.map((c) => ({
-      ...c,
-      checkedInAt: c.checkedInAt.toISOString(),
-    }))
-  );
+  return res.json(checkins.map((c) => ({ ...c, checkedInAt: c.checkedInAt.toISOString() })));
 });
 
 // POST /checkins
 router.post("/checkins", async (req, res) => {
   const parsed = CreateCheckinBody.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid request body", details: parsed.error.issues });
-  }
+  if (!parsed.success) return res.status(400).json({ error: "Invalid request body", details: parsed.error.issues });
 
   const data = parsed.data;
   const [created] = await db
@@ -56,6 +53,7 @@ router.post("/checkins", async (req, res) => {
     .values({
       employeeId: data.employeeId,
       employeeName: data.employeeName,
+      department: data.department ?? null,
       mood: data.mood,
       energyLevel: data.energyLevel ?? null,
       focusLevel: data.focusLevel ?? null,
@@ -65,31 +63,22 @@ router.post("/checkins", async (req, res) => {
     })
     .returning();
 
-  return res.status(201).json({
-    ...created,
-    checkedInAt: created.checkedInAt.toISOString(),
-  });
+  return res.status(201).json({ ...created, checkedInAt: created.checkedInAt.toISOString() });
 });
 
 // GET /checkins/summary
 router.get("/checkins/summary", async (req, res) => {
   const parsed = GetCheckinSummaryQueryParams.safeParse(req.query);
-  if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid query params" });
-  }
+  if (!parsed.success) return res.status(400).json({ error: "Invalid query params" });
 
   const { start, end } = getDateRange(parsed.data.date);
-
   const checkins = await db
     .select()
     .from(checkinsTable)
-    .where(
-      sql`${checkinsTable.checkedInAt} >= ${start} AND ${checkinsTable.checkedInAt} <= ${end}`
-    )
+    .where(sql`${checkinsTable.checkedInAt} >= ${start} AND ${checkinsTable.checkedInAt} <= ${end}`)
     .orderBy(desc(checkinsTable.checkedInAt));
 
   const totalCheckins = checkins.length;
-
   const moodBreakdown: Record<string, number> = {};
   let totalEnergy = 0, energyCount = 0;
   let totalFocus = 0, focusCount = 0;
@@ -106,8 +95,6 @@ router.get("/checkins/summary", async (req, res) => {
   const averageFocus = focusCount > 0 ? Math.round((totalFocus / focusCount) * 10) / 10 : 0;
   const averageStress = stressCount > 0 ? Math.round((totalStress / stressCount) * 10) / 10 : 0;
 
-  // Wellness score: based on mood weights + low stress bonus
-  const moodWeights: Record<string, number> = { great: 10, good: 8, okay: 6, stressed: 3, exhausted: 2 };
   const totalMoodScore = checkins.reduce((sum, c) => sum + (moodWeights[c.mood] ?? 5), 0);
   const moodAvg = totalCheckins > 0 ? totalMoodScore / totalCheckins : 0;
   const stressPenalty = averageStress > 7 ? 1.5 : averageStress > 5 ? 0.5 : 0;
@@ -118,9 +105,28 @@ router.get("/checkins/summary", async (req, res) => {
     (c) => burnoutMoods.includes(c.mood) || (c.stressLevel != null && c.stressLevel >= 8)
   ).length;
 
-  const positiveMoods = ["great", "good"];
+  // Department breakdown
+  const deptMap: Record<string, { count: number; moodScores: number[]; moodCounts: Record<string, number> }> = {};
+  for (const c of checkins) {
+    const dept = c.department || "Unassigned";
+    if (!deptMap[dept]) deptMap[dept] = { count: 0, moodScores: [], moodCounts: {} };
+    deptMap[dept].count++;
+    deptMap[dept].moodScores.push(moodWeights[c.mood] ?? 5);
+    deptMap[dept].moodCounts[c.mood] = (deptMap[dept].moodCounts[c.mood] ?? 0) + 1;
+  }
+  const departmentBreakdown = Object.entries(deptMap).map(([department, d]) => {
+    const avgWellness = d.moodScores.reduce((s, v) => s + v, 0) / d.moodScores.length;
+    const dominantMood = Object.entries(d.moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "none";
+    return {
+      department,
+      count: d.count,
+      averageWellness: Math.round(avgWellness * 10) / 10,
+      dominantMood,
+    };
+  }).sort((a, b) => b.count - a.count);
+
   const topPositiveEmployees = checkins
-    .filter((c) => positiveMoods.includes(c.mood))
+    .filter((c) => ["great", "good"].includes(c.mood))
     .slice(0, 3)
     .map((c) => ({ ...c, checkedInAt: c.checkedInAt.toISOString() }));
 
@@ -137,6 +143,7 @@ router.get("/checkins/summary", async (req, res) => {
     averageStress,
     teamWellnessScore: Math.round(teamWellnessScore * 10) / 10,
     burnoutRiskCount,
+    departmentBreakdown,
     topPositiveEmployees,
     needsSupportEmployees,
   });
@@ -144,9 +151,7 @@ router.get("/checkins/summary", async (req, res) => {
 
 // GET /checkins/trends
 router.get("/checkins/trends", async (req, res) => {
-  const days: Array<{ date: string; totalCheckins: number; dominantMood: string; averageWellness: number }> = [];
-
-  const moodWeights: Record<string, number> = { great: 10, good: 8, okay: 6, stressed: 3, exhausted: 2 };
+  const days = [];
 
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
@@ -157,9 +162,7 @@ router.get("/checkins/trends", async (req, res) => {
     const dayCheckins = await db
       .select()
       .from(checkinsTable)
-      .where(
-        sql`${checkinsTable.checkedInAt} >= ${start} AND ${checkinsTable.checkedInAt} <= ${end}`
-      );
+      .where(sql`${checkinsTable.checkedInAt} >= ${start} AND ${checkinsTable.checkedInAt} <= ${end}`);
 
     const moodCounts: Record<string, number> = {};
     let totalWellness = 0;

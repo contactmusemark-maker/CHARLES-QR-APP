@@ -11,6 +11,8 @@ export interface CheckIn {
   id: number;
   employeeId: string;
   employeeName: string;
+  /** @nullable */
+  department?: string | null;
   mood: CheckInMood;
   /** @nullable */
   energyLevel?: number | null;
