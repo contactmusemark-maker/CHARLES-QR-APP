@@ -22,6 +22,7 @@ postgresql://postgres.[ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:6
 ```
 
 Replace `[YOUR-PASSWORD]` with the password you set in Step 1.
+If your password contains special characters (like `@`, `:`, `[`, `]`), make sure to URL-encode it before pasting (for example `@` → `%40`).
 
 ---
 
@@ -38,6 +39,8 @@ Edit your `.env` file:
 DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 SESSION_SECRET=your-long-random-secret
 ```
+
+Note: the square brackets in examples are placeholders — do not include `[` or `]` in your actual URL unless they are part of your real password (and then they must be URL-encoded).
 
 ---
 

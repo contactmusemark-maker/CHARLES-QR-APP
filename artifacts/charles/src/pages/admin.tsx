@@ -53,6 +53,7 @@ import {
 } from "lucide-react";
 
 import studyBonsai from "@assets/Study_-_Work_Bonsai_1779333623328.png";
+import { isAdminAuthed, setAdminAuthed } from "@/lib/admin-auth";
 
 const MOOD_COLORS: Record<string, string> = {
   Great: "#4a7c59",
@@ -158,6 +159,12 @@ ${atRisk}
 export default function Admin() {
   const [, setLocation] = useLocation();
   const { employee, clearSession } = useEmployee();
+  const employeeOk =
+    Boolean(employee) &&
+    employee!.id.toUpperCase() === "CCE001" &&
+    employee!.name.toUpperCase() === "WILLIAM";
+  const adminOk = isAdminAuthed();
+  const allowed = adminOk || employeeOk;
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -168,27 +175,28 @@ export default function Admin() {
   const isToday = dateParam === format(new Date(), "yyyy-MM-dd");
 
   useEffect(() => {
-    if (!employee || employee.id.toUpperCase() !== "CCE001" || employee.name.toUpperCase() !== "WILLIAM") {
+    if (!allowed) {
       setLocation("/");
     }
-  }, [employee, setLocation]);
+  }, [allowed, setLocation]);
 
   const { data: summary, isLoading: isLoadingSummary } = useGetCheckinSummary(
     { date: dateParam },
-    { query: { queryKey: getGetCheckinSummaryQueryKey({ date: dateParam }) } }
+    { query: { queryKey: getGetCheckinSummaryQueryKey({ date: dateParam }), enabled: allowed } }
   );
 
   const { data: trends, isLoading: isLoadingTrends } = useGetCheckinTrends({
-    query: { queryKey: getGetCheckinTrendsQueryKey() },
+    query: { queryKey: getGetCheckinTrendsQueryKey(), enabled: allowed },
   });
 
   const { data: checkins, isLoading: isLoadingCheckins } = useListCheckins(
     { date: dateParam },
-    { query: { queryKey: getListCheckinsQueryKey({ date: dateParam }) } }
+    { query: { queryKey: getListCheckinsQueryKey({ date: dateParam }), enabled: allowed } }
   );
 
   const handleSignOut = () => {
     clearSession();
+    setAdminAuthed(false);
     setLocation("/");
   };
 
@@ -248,17 +256,17 @@ export default function Admin() {
     return "neutral";
   }, [trends]);
 
-  if (!employee) return null;
+  if (!allowed) return null;
 
   return (
     <div className="min-h-screen w-full bg-background/50">
 
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-14 items-center justify-between px-4 md:px-6 max-w-7xl mx-auto gap-3">
+        <div className="flex h-16 items-center justify-between px-4 md:px-6 max-w-7xl mx-auto gap-3">
           {/* Left: brand */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Bonsai src={studyBonsai} alt="Charles working" className="w-8 h-8" floating={false} />
+          <div className="flex items-center gap-3 shrink-0">
+            <Bonsai src={studyBonsai} alt="Charles working" className="w-12 h-12 md:w-14 md:h-14 shrink-0" floating={false} />
             <span className="text-base font-serif font-medium tracking-tight whitespace-nowrap">Charles Admin</span>
           </div>
 
@@ -285,7 +293,7 @@ export default function Admin() {
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 shadow-xl rounded-2xl border-border/50" align="center" sideOffset={8}>
+                <PopoverContent className="w-auto max-w-[calc(100vw-1.5rem)] p-2 shadow-xl rounded-2xl border-border/50" align="center" sideOffset={8}>
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -295,7 +303,7 @@ export default function Admin() {
                     className="rounded-2xl"
                   />
                   {!isToday && (
-                    <div className="px-3 pb-3">
+                    <div className="px-1 pb-1">
                       <button
                         onClick={() => { setSelectedDate(new Date()); setCalendarOpen(false); }}
                         className="w-full h-8 rounded-xl bg-[#4a7c59] text-white text-xs font-semibold hover:bg-[#3d6b4a] transition-colors"

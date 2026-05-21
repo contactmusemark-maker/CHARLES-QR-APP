@@ -11,6 +11,7 @@ import {
   ArrowLeft, Loader2, AlertTriangle, TrendingUp, TrendingDown, Minus, Building2, Calendar,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isAdminAuthed } from "@/lib/admin-auth";
 
 const MOOD_COLORS: Record<string, string> = {
   great: "#4a7c59",
@@ -39,19 +40,24 @@ export default function EmployeeTrend() {
   const { employee } = useEmployee();
   const [, params] = useRoute("/admin/employee/:employeeId");
   const employeeId = params?.employeeId ?? "";
+  const employeeOk =
+    Boolean(employee) &&
+    employee!.id.toUpperCase() === "CCE001" &&
+    employee!.name.toUpperCase() === "WILLIAM";
+  const allowed = isAdminAuthed() || employeeOk;
 
   useEffect(() => {
-    if (!employee || employee.id.toUpperCase() !== "CCE001" || employee.name.toUpperCase() !== "WILLIAM") {
+    if (!allowed) {
       setLocation("/");
     }
-  }, [employee, setLocation]);
+  }, [allowed, setLocation]);
 
   const { data: history, isLoading } = useGetEmployeeHistory(
     employeeId,
-    { query: { queryKey: getGetEmployeeHistoryQueryKey(employeeId), enabled: !!employeeId } }
+    { query: { queryKey: getGetEmployeeHistoryQueryKey(employeeId), enabled: allowed && !!employeeId } }
   );
 
-  if (!employee) return null;
+  if (!allowed) return null;
 
   const checkins = history?.checkins ?? [];
   const chartData = [...checkins]
