@@ -170,7 +170,7 @@ export default function EmployeeWelcome() {
           </div>
 
           <div className="mt-4 sm:mt-7 text-[10px] sm:text-[11px] tracking-[0.34em] uppercase text-[#6b7280]/85">
-            ROOTED. CALM. FOCUSED.
+            GROW. BREATHE. ALIGN.
           </div>
         </motion.div>
       </motion.div>
