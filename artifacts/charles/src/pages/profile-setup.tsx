@@ -357,18 +357,18 @@ export default function ProfileSetup() {
                     fileInputRef.current?.click();
                   }
                 }}
-                className="mt-3 w-28 h-28 rounded-full bg-white/70 border border-white/80 shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden relative"
+                className="mt-3 w-32 h-32 rounded-full bg-white/70 border border-white/80 shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden relative"
               >
                 {avatarPreviewUrl ? (
                   <img src={avatarPreviewUrl} alt="Profile preview" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-[#6b7280]">
-                    <div className="w-12 h-12 rounded-full bg-[#dfe7db] text-[#4a7c59] flex items-center justify-center">
-                      <span className="font-semibold">{initials}</span>
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-[#6b7280]">
+                    <div className="w-14 h-14 rounded-full bg-[#dfe7db] text-[#4a7c59] flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+                      <span className="text-lg font-semibold">{initials}</span>
                     </div>
-                    <div className="inline-flex items-center gap-1 text-xs">
+                    <div className="text-xs font-medium">Add photo</div>
+                    <div className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-[#4a7c59] text-white flex items-center justify-center shadow-md">
                       <Camera className="w-4 h-4" />
-                      Upload
                     </div>
                   </div>
                 )}
@@ -502,7 +502,7 @@ export default function ProfileSetup() {
             className={cn(
               "fixed left-[50%] top-[50%] z-50 w-[min(92vw,720px)] translate-x-[-50%] translate-y-[-50%]",
               "rounded-3xl border border-black/[0.06] bg-[#f7f4ef] shadow-[0_18px_70px_rgba(0,0,0,0.18)]",
-              "p-0 overflow-hidden focus:outline-none",
+              "p-0 overflow-hidden focus:outline-none max-h-[92svh] flex flex-col",
             )}
           >
             <div className="px-6 pt-6 pb-4 border-b border-black/[0.06]">
@@ -512,9 +512,10 @@ export default function ProfileSetup() {
               </div>
             </div>
 
-            <div className="p-6 grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-5 sm:gap-6">
               <div className="md:col-span-3">
-                <div className="relative w-full aspect-square rounded-3xl bg-white border border-black/[0.06] overflow-hidden">
+                <div className="relative w-full h-[min(42svh,360px)] md:h-auto md:aspect-square rounded-3xl bg-white border border-black/[0.06] overflow-hidden">
                   {rawPhotoUrl && (
                     <Cropper
                       image={rawPhotoUrl}
@@ -526,7 +527,10 @@ export default function ProfileSetup() {
                       onCropChange={setCrop}
                       onZoomChange={setZoom}
                       onCropComplete={(_area, areaPixels) => setCroppedAreaPixels(areaPixels)}
-                      restrictPosition={false}
+                      restrictPosition
+                      maxZoom={3}
+                      minZoom={1}
+                      objectFit="horizontal-cover"
                     />
                   )}
                 </div>
@@ -581,8 +585,9 @@ export default function ProfileSetup() {
                 </div>
               </div>
             </div>
+            </div>
 
-            <div className="px-6 py-5 border-t border-black/[0.06] flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <div className="px-4 sm:px-6 py-4 border-t border-black/[0.06] flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between bg-[#f7f4ef]">
               <button
                 type="button"
                 onClick={closeEditor}
