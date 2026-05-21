@@ -576,7 +576,13 @@ export default function Admin() {
 
                         return (
                           <Fragment key={c.id}>
-                          <tr className="hover:bg-white/50 transition-colors">
+                          <tr
+                            className="hover:bg-white/50 transition-colors cursor-pointer"
+                            onClick={() => {
+                              setProfileEmployeeId(c.employeeId);
+                              setProfileOpen(true);
+                            }}
+                          >
                             <td className="py-3 pr-4 font-medium">
                               <div className="w-full flex items-center gap-2">
                                 <button
@@ -584,7 +590,10 @@ export default function Admin() {
                                   className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#dfe7db]/60 text-[#4a7c59] hover:bg-[#dfe7db]/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a7c59]/35"
                                   aria-expanded={isExpanded}
                                   aria-controls={noteRegionId}
-                                  onClick={() => setExpandedCheckinId((prev) => (prev === c.id ? null : c.id))}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedCheckinId((prev) => (prev === c.id ? null : c.id));
+                                  }}
                                   aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
                                 >
                                   <motion.span
@@ -598,7 +607,8 @@ export default function Admin() {
 
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setProfileEmployeeId(c.employeeId);
                                     setProfileOpen(true);
                                   }}
