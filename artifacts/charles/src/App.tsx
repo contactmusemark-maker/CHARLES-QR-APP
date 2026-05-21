@@ -11,6 +11,7 @@ import MoodSelect from "@/pages/mood-select";
 import MoodDetail from "@/pages/mood-detail";
 import Success from "@/pages/success";
 import Admin from "@/pages/admin";
+import QrPoster from "@/pages/qr-poster";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/mood/detail" component={MoodDetail} />
         <Route path="/success" component={Success} />
         <Route path="/admin" component={Admin} />
+        <Route path="/poster" component={QrPoster} />
         <Route component={NotFound} />
       </Switch>
     </AnimatePresence>

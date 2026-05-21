@@ -23,7 +23,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
-import { Loader2, LogOut, AlertTriangle, Heart, Zap, Focus, ShieldAlert } from "lucide-react";
+import { Loader2, LogOut, AlertTriangle, Heart, Zap, Focus, ShieldAlert, QrCode } from "lucide-react";
 
 import studyBonsai from "@assets/Study_-_Work_Bonsai_1779333623328.png";
 
@@ -70,10 +70,14 @@ export default function Admin() {
             <Bonsai src={studyBonsai} alt="Charles working" className="w-10 h-10" floating={false} />
             <h1 className="text-xl font-serif font-medium tracking-tight">Charles Admin</h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground hidden md:inline-block">
               {format(new Date(), "EEEE, MMMM d, yyyy")}
             </span>
+            <Button variant="outline" size="sm" onClick={() => setLocation("/poster")} className="rounded-full border-[#4a7c59]/30 text-[#4a7c59] hover:bg-[#4a7c59]/10">
+              <QrCode className="w-4 h-4 mr-2" />
+              QR Poster
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="rounded-full">
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
