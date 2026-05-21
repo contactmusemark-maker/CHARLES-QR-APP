@@ -18,5 +18,4 @@ export interface EmployeeHistory {
   averageStress?: number;
   averageWellness?: number;
   burnoutDays?: number;
-  dominantMood?: string;
 }

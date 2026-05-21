@@ -114,6 +114,34 @@ export interface EmployeeHistory {
   averageStress?: number;
   averageWellness?: number;
   burnoutDays?: number;
+}
+
+export interface EmployeeProfileInput {
+  fullName: string;
+  /** @nullable */
+  department?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  profileImageUrl?: string | null;
+}
+
+export interface EmployeeProfile {
+  id: number;
+  employeeId: string;
+  fullName: string;
+  /** @nullable */
+  department?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  profileImageUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
   dominantMood?: string;
 }
 
@@ -136,5 +164,9 @@ export type GetCheckinSummaryParams = {
  * Date to summarize (YYYY-MM-DD), defaults to today
  */
 date?: string;
+};
+
+export type GetEmployeeProfile404 = {
+  error?: string;
 };
 

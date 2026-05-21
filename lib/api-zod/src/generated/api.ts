@@ -141,8 +141,7 @@ export const GetEmployeeHistoryResponse = zod.object({
   "averageFocus": zod.number().optional(),
   "averageStress": zod.number().optional(),
   "averageWellness": zod.number().optional(),
-  "burnoutDays": zod.number().optional(),
-  "dominantMood": zod.string().optional()
+  "burnoutDays": zod.number().optional()
 })
 
 
@@ -156,5 +155,55 @@ export const GetCheckinTrendsResponseItem = zod.object({
   "averageWellness": zod.number()
 })
 export const GetCheckinTrendsResponse = zod.array(GetCheckinTrendsResponseItem)
+
+
+/**
+ * @summary Get an employee profile
+ */
+export const GetEmployeeProfileParams = zod.object({
+  "employeeId": zod.coerce.string()
+})
+
+export const GetEmployeeProfileResponse = zod.object({
+  "id": zod.number(),
+  "employeeId": zod.string(),
+  "fullName": zod.string(),
+  "department": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "profileImageUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "dominantMood": zod.string().optional()
+})
+
+
+/**
+ * @summary Create or update an employee profile
+ */
+export const UpsertEmployeeProfileParams = zod.object({
+  "employeeId": zod.coerce.string()
+})
+
+export const UpsertEmployeeProfileBody = zod.object({
+  "fullName": zod.string(),
+  "department": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "profileImageUrl": zod.string().nullish()
+})
+
+export const UpsertEmployeeProfileResponse = zod.object({
+  "id": zod.number(),
+  "employeeId": zod.string(),
+  "fullName": zod.string(),
+  "department": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "profileImageUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "dominantMood": zod.string().optional()
+})
 
 

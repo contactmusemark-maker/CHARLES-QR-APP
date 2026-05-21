@@ -8,6 +8,7 @@ import { AnimatePresence } from "framer-motion";
 import NotFound from "@/pages/not-found";
 import Welcome from "@/pages/welcome";
 import EmployeeWelcome from "@/pages/employee-welcome";
+import ProfileSetup from "@/pages/profile-setup";
 import MoodSelect from "@/pages/mood-select";
 import MoodDetail from "@/pages/mood-detail";
 import Success from "@/pages/success";
@@ -23,6 +24,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Welcome} />
         <Route path="/employee/welcome" component={EmployeeWelcome} />
+        <Route path="/profile/setup" component={ProfileSetup} />
         <Route path="/mood" component={MoodSelect} />
         <Route path="/mood/detail" component={MoodDetail} />
         <Route path="/success" component={Success} />

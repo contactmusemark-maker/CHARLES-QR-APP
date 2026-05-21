@@ -24,7 +24,10 @@ import type {
   CheckInInput,
   CheckInSummary,
   EmployeeHistory,
+  EmployeeProfile,
+  EmployeeProfileInput,
   GetCheckinSummaryParams,
+  GetEmployeeProfile404,
   HealthStatus,
   ListCheckinsParams,
   TrendDay
@@ -511,4 +514,153 @@ export function useGetCheckinTrends<TData = Awaited<ReturnType<typeof getCheckin
 
 
 
+
+export const getGetEmployeeProfileUrl = (employeeId: string,) => {
+
+
+
+
+  return `/api/profiles/${employeeId}`
+}
+
+/**
+ * @summary Get an employee profile
+ */
+export const getEmployeeProfile = async (employeeId: string, options?: RequestInit): Promise<EmployeeProfile> => {
+
+  return customFetch<EmployeeProfile>(getGetEmployeeProfileUrl(employeeId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetEmployeeProfileQueryKey = (employeeId: string,) => {
+    return [
+    `/api/profiles/${employeeId}`
+    ] as const;
+    }
+
+
+export const getGetEmployeeProfileQueryOptions = <TData = Awaited<ReturnType<typeof getEmployeeProfile>>, TError = ErrorType<GetEmployeeProfile404>>(employeeId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEmployeeProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEmployeeProfileQueryKey(employeeId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEmployeeProfile>>> = ({ signal }) => getEmployeeProfile(employeeId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(employeeId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEmployeeProfile>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetEmployeeProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getEmployeeProfile>>>
+export type GetEmployeeProfileQueryError = ErrorType<GetEmployeeProfile404>
+
+
+/**
+ * @summary Get an employee profile
+ */
+
+export function useGetEmployeeProfile<TData = Awaited<ReturnType<typeof getEmployeeProfile>>, TError = ErrorType<GetEmployeeProfile404>>(
+ employeeId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEmployeeProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetEmployeeProfileQueryOptions(employeeId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpsertEmployeeProfileUrl = (employeeId: string,) => {
+
+
+
+
+  return `/api/profiles/${employeeId}`
+}
+
+/**
+ * @summary Create or update an employee profile
+ */
+export const upsertEmployeeProfile = async (employeeId: string,
+    employeeProfileInput: EmployeeProfileInput, options?: RequestInit): Promise<EmployeeProfile> => {
+
+  return customFetch<EmployeeProfile>(getUpsertEmployeeProfileUrl(employeeId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      employeeProfileInput,)
+  }
+);}
+
+
+
+
+export const getUpsertEmployeeProfileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertEmployeeProfile>>, TError,{employeeId: string;data: BodyType<EmployeeProfileInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof upsertEmployeeProfile>>, TError,{employeeId: string;data: BodyType<EmployeeProfileInput>}, TContext> => {
+
+const mutationKey = ['upsertEmployeeProfile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof upsertEmployeeProfile>>, {employeeId: string;data: BodyType<EmployeeProfileInput>}> = (props) => {
+          const {employeeId,data} = props ?? {};
+
+          return  upsertEmployeeProfile(employeeId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpsertEmployeeProfileMutationResult = NonNullable<Awaited<ReturnType<typeof upsertEmployeeProfile>>>
+    export type UpsertEmployeeProfileMutationBody = BodyType<EmployeeProfileInput>
+    export type UpsertEmployeeProfileMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create or update an employee profile
+ */
+export const useUpsertEmployeeProfile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertEmployeeProfile>>, TError,{employeeId: string;data: BodyType<EmployeeProfileInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof upsertEmployeeProfile>>,
+        TError,
+        {employeeId: string;data: BodyType<EmployeeProfileInput>},
+        TContext
+      > => {
+      return useMutation(getUpsertEmployeeProfileMutationOptions(options));
+    }
 

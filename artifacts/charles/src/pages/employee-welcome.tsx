@@ -10,7 +10,7 @@ import welcomeBonsai from "@assets/Happy_Wave_Bonsai_1779333623327.png";
 
 export default function EmployeeWelcome() {
   const [, setLocation] = useLocation();
-  const { employee } = useEmployee();
+  const { employee, profile } = useEmployee();
 
   const firstName = useMemo(() => {
     if (!employee?.name) return "";
@@ -138,7 +138,7 @@ export default function EmployeeWelcome() {
             type="button"
             whileHover={{ scale: 1.015 }}
             whileTap={{ scale: 0.985 }}
-            onClick={() => setLocation("/mood")}
+            onClick={() => setLocation(profile ? "/mood" : "/profile/setup")}
             className="w-full max-w-sm h-12 sm:h-14 rounded-full bg-[#4a7c59] text-white text-[14px] sm:text-[15px] font-semibold tracking-wide hover:bg-[#3d6b4a] transition-colors shadow-[0_16px_44px_rgba(74,124,89,0.24)]"
           >
             Begin Check-in

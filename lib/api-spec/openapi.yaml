@@ -11,6 +11,8 @@ tags:
     description: Health operations
   - name: checkins
     description: Mood check-in operations
+  - name: profiles
+    description: Employee profile operations
 paths:
   /healthz:
     get:
@@ -115,6 +117,58 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TrendDay"
+
+  /profiles/{employeeId}:
+    get:
+      operationId: getEmployeeProfile
+      tags: [profiles]
+      summary: Get an employee profile
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeProfile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    put:
+      operationId: upsertEmployeeProfile
+      tags: [profiles]
+      summary: Create or update an employee profile
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeProfileInput"
+      responses:
+        "200":
+          description: Upserted profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeProfile"
 
 components:
   schemas:
@@ -258,6 +312,46 @@ components:
           type: number
         burnoutDays:
           type: integer
+
+    EmployeeProfileInput:
+      type: object
+      required: [fullName]
+      properties:
+        fullName:
+          type: string
+        department:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        profileImageUrl:
+          type: ["string", "null"]
+
+    EmployeeProfile:
+      type: object
+      required: [id, employeeId, fullName, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: string
+        fullName:
+          type: string
+        department:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        profileImageUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
         dominantMood:
           type: string
 

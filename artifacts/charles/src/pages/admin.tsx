@@ -13,9 +13,13 @@ import {
   useGetCheckinSummary,
   useGetCheckinTrends,
   useListCheckins,
+  useGetEmployeeProfile,
+  useGetEmployeeHistory,
   getGetCheckinSummaryQueryKey,
   getGetCheckinTrendsQueryKey,
   getListCheckinsQueryKey,
+  getGetEmployeeProfileQueryKey,
+  getGetEmployeeHistoryQueryKey,
 } from "@workspace/api-client-react";
 import {
   BarChart,
@@ -174,6 +178,8 @@ export default function Admin() {
   const [reportOpen, setReportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [expandedCheckinId, setExpandedCheckinId] = useState<number | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileEmployeeId, setProfileEmployeeId] = useState<string | null>(null);
 
   const dateParam = format(selectedDate, "yyyy-MM-dd");
   const isToday = dateParam === format(new Date(), "yyyy-MM-dd");
@@ -196,6 +202,19 @@ export default function Admin() {
   const { data: checkins, isLoading: isLoadingCheckins } = useListCheckins(
     { date: dateParam },
     { query: { queryKey: getListCheckinsQueryKey({ date: dateParam }), enabled: allowed } }
+  );
+
+  const activeProfileId = profileEmployeeId ?? "";
+  const profileEnabled = allowed && profileOpen && Boolean(profileEmployeeId);
+
+  const { data: activeProfile, isLoading: isLoadingProfile } = useGetEmployeeProfile(
+    activeProfileId,
+    { query: { queryKey: getGetEmployeeProfileQueryKey(activeProfileId), enabled: profileEnabled } },
+  );
+
+  const { data: activeHistory, isLoading: isLoadingProfileHistory } = useGetEmployeeHistory(
+    activeProfileId,
+    { query: { queryKey: getGetEmployeeHistoryQueryKey(activeProfileId), enabled: profileEnabled } },
   );
 
   const handleSignOut = () => {
@@ -559,22 +578,39 @@ export default function Admin() {
                           <Fragment key={c.id}>
                           <tr className="hover:bg-white/50 transition-colors">
                             <td className="py-3 pr-4 font-medium">
-                              <button
-                                type="button"
-                                className="w-full inline-flex items-center gap-2 text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a7c59]/35"
-                                aria-expanded={isExpanded}
-                                aria-controls={noteRegionId}
-                                onClick={() => setExpandedCheckinId((prev) => (prev === c.id ? null : c.id))}
-                              >
-                                <motion.span
-                                  className="shrink-0 w-7 h-7 rounded-full bg-[#dfe7db]/70 text-[#4a7c59] flex items-center justify-center"
-                                  animate={{ rotate: isExpanded ? 180 : 0 }}
-                                  transition={{ duration: 0.22, ease: "easeOut" }}
+                              <div className="w-full flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#dfe7db]/60 text-[#4a7c59] hover:bg-[#dfe7db]/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a7c59]/35"
+                                  aria-expanded={isExpanded}
+                                  aria-controls={noteRegionId}
+                                  onClick={() => setExpandedCheckinId((prev) => (prev === c.id ? null : c.id))}
+                                  aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
                                 >
-                                  {isExpanded ? <ChevronUp className="w-4 h-4 -rotate-180" /> : <ChevronDown className="w-4 h-4" />}
-                                </motion.span>
-                                <span className="truncate">{c.employeeName}</span>
-                              </button>
+                                  <motion.span
+                                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                                    transition={{ duration: 0.22, ease: "easeOut" }}
+                                    className="inline-flex"
+                                  >
+                                    {isExpanded ? <ChevronUp className="w-4 h-4 -rotate-180" /> : <ChevronDown className="w-4 h-4" />}
+                                  </motion.span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setProfileEmployeeId(c.employeeId);
+                                    setProfileOpen(true);
+                                  }}
+                                  className="min-w-0 flex-1 text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a7c59]/35"
+                                  aria-label={`Open profile for ${c.employeeName}`}
+                                >
+                                  <span className="truncate inline-flex items-center gap-1.5 hover:text-[#4a7c59] transition-colors">
+                                    {c.employeeName}
+                                    <ExternalLink className="w-3.5 h-3.5 opacity-50" />
+                                  </span>
+                                </button>
+                              </div>
                             </td>
                             <td className="py-3 pr-4 text-muted-foreground font-mono text-xs">{c.employeeId}</td>
                             <td className="py-3 pr-4">
@@ -804,6 +840,126 @@ export default function Admin() {
 
         </PageTransition>
       </main>
+
+      {/* Employee Profile Modal */}
+      <Dialog
+        open={profileOpen}
+        onOpenChange={(open) => {
+          setProfileOpen(open);
+          if (!open) setProfileEmployeeId(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+            <DialogTitle className="text-xl font-serif flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#4a7c59]" />
+              Employee Profile
+            </DialogTitle>
+            <DialogDescription>
+              {profileEmployeeId ? `ID: ${profileEmployeeId}` : "—"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            {(isLoadingProfile || isLoadingProfileHistory) ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div className="shrink-0">
+                    {activeProfile?.profileImageUrl ? (
+                      <img
+                        src={activeProfile.profileImageUrl}
+                        alt={`${activeProfile.fullName} avatar`}
+                        className="w-20 h-20 rounded-2xl object-cover border border-black/[0.06] shadow-sm"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-2xl bg-[#dfe7db] text-[#4a7c59] flex items-center justify-center border border-black/[0.06] shadow-sm">
+                        <span className="text-xl font-semibold">
+                          {(activeProfile?.fullName ?? activeHistory?.employeeName ?? "C")
+                            .trim()
+                            .split(/\s+/)
+                            .slice(0, 2)
+                            .map((p) => p[0])
+                            .join("")
+                            .toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-2xl font-serif leading-tight">
+                      {activeProfile?.fullName ?? activeHistory?.employeeName ?? "Employee"}
+                    </div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {activeProfile?.department ?? activeHistory?.department ?? "—"}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      {activeProfile?.email ? <span className="px-2 py-1 rounded-full bg-muted/40 border">{activeProfile.email}</span> : null}
+                      {activeProfile?.phone ? <span className="px-2 py-1 rounded-full bg-muted/40 border">{activeProfile.phone}</span> : null}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats + mini trend */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-2xl border bg-white/60 backdrop-blur-sm p-4 shadow-sm">
+                    <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Total check-ins</div>
+                    <div className="mt-1 text-2xl font-serif">
+                      {activeHistory?.checkins?.length ?? 0}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border bg-white/60 backdrop-blur-sm p-4 shadow-sm">
+                    <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Last check-in</div>
+                    <div className="mt-1 text-sm text-foreground">
+                      {activeHistory?.checkins?.[0]?.checkedInAt
+                        ? format(new Date(activeHistory.checkins[0].checkedInAt), "MMM d, h:mm a")
+                        : "—"}
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground capitalize">
+                      {activeHistory?.checkins?.[0]?.mood ?? "—"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border bg-white/60 backdrop-blur-sm p-4 shadow-sm">
+                    <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Recent notes</div>
+                    <div className="mt-1 text-sm text-foreground leading-relaxed">
+                      {(() => {
+                        const recent = activeHistory?.checkins?.find((x) => typeof x.note === "string" && x.note.trim());
+                        const text = recent?.note?.trim();
+                        return text ? `“${text}”` : <span className="text-muted-foreground">No additional notes.</span>;
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick actions */}
+                {profileEmployeeId && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full gap-2"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        setLocation(`/admin/employee/${profileEmployeeId}`);
+                      }}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Full history
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Weekly Report Modal */}
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>

@@ -4,10 +4,11 @@ import { useEmployee } from "@/context/employee-context";
 import { PageTransition } from "@/components/page-transition";
 import { Bonsai } from "@/components/bonsai";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Shield } from "lucide-react";
+import { Eye, EyeOff, Shield, Loader2 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTempAdminCredentials, setAdminAuthed, type TempAdminCredentials } from "@/lib/admin-auth";
+import { useToast } from "@/hooks/use-toast";
 
 import welcomeBonsai from "@assets/Happy_Wave_Bonsai_1779333623327.png";
 
@@ -28,8 +29,12 @@ const DEPARTMENTS = [
 
 export default function Welcome() {
   const [, setLocation] = useLocation();
-  const { setEmployee } = useEmployee();
+  const { setEmployee, setProfile } = useEmployee();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"employee" | "admin">("employee");
+
+  const [employeeStep, setEmployeeStep] = useState<"id" | "details">("id");
+  const [isCheckingProfile, setIsCheckingProfile] = useState(false);
 
   const [employeeId, setEmployeeId] = useState("");
   const [employeeName, setEmployeeName] = useState("");
@@ -43,24 +48,93 @@ export default function Welcome() {
 
   const tempAdmin: TempAdminCredentials = useMemo(() => getTempAdminCredentials(), []);
 
+  const resolveApiUrl = (path: string): string => {
+    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, "");
+    if (base) return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+    return path;
+  };
+
   const validate = () => {
     const e: Record<string, string> = {};
     if (!employeeId.trim()) e.employeeId = "Required";
-    if (!employeeName.trim()) e.employeeName = "Required";
-    if (!department) e.department = "Required";
+    if (employeeStep === "details") {
+      if (!employeeName.trim()) e.employeeName = "Required";
+      if (!department) e.department = "Required";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    setEmployee({ id: employeeId.trim(), name: employeeName.trim(), department });
-    if (employeeId.trim().toUpperCase() === "CCE001" && employeeName.trim().toUpperCase() === "WILLIAM") {
-      setLocation("/admin");
-    } else {
-      setLocation("/employee/welcome");
+
+    const id = employeeId.trim();
+
+    // Step 1: only ID → check for returning user profile
+    if (employeeStep === "id") {
+      setIsCheckingProfile(true);
+      try {
+        const resp = await fetch(resolveApiUrl(`/api/profiles/${encodeURIComponent(id)}`), { method: "GET" });
+
+        if (resp.status === 404) {
+          setEmployee(null);
+          setProfile(null);
+          setEmployeeStep("details");
+          return;
+        }
+
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => "");
+          throw new Error(text || `Profile lookup failed (HTTP ${resp.status})`);
+        }
+
+        const p = (await resp.json()) as {
+          employeeId: string;
+          fullName: string;
+          department?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          profileImageUrl?: string | null;
+          createdAt?: string;
+          updatedAt?: string;
+        };
+
+        setProfile({
+          employeeId: p.employeeId,
+          fullName: p.fullName,
+          department: p.department ?? null,
+          email: p.email ?? null,
+          phone: p.phone ?? null,
+          profileImageUrl: p.profileImageUrl ?? null,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+        });
+
+        setEmployee({
+          id: p.employeeId,
+          name: p.fullName,
+          department: p.department ?? "Other",
+        });
+
+        setLocation("/employee/welcome");
+      } catch (err) {
+        const message =
+          err && typeof err === "object" && "message" in err
+            ? String((err as { message?: unknown }).message)
+            : "Please try again.";
+        toast({ title: "Couldn’t check your profile", description: message, variant: "destructive" });
+      } finally {
+        setIsCheckingProfile(false);
+      }
+
+      return;
     }
+
+    // Step 2: new user details → continue to welcome, then profile setup
+    setProfile(null);
+    setEmployee({ id, name: employeeName.trim(), department });
+    setLocation("/employee/welcome");
   };
 
   const validateAdmin = () => {
@@ -139,55 +213,87 @@ export default function Welcome() {
                     type="text"
                     placeholder="e.g. EMP001"
                     value={employeeId}
-                    onChange={(e) => { setEmployeeId(e.target.value); setErrors(p => ({ ...p, employeeId: "" })); }}
+                    onChange={(e) => {
+                      setEmployeeId(e.target.value);
+                      setErrors(p => ({ ...p, employeeId: "" }));
+                      if (employeeStep === "details") {
+                        // If they edit the ID, re-checking is likely.
+                        setEmployeeStep("id");
+                        setEmployeeName("");
+                        setDepartment("");
+                      }
+                    }}
                     autoComplete="off"
                     className={`w-full h-12 px-4 rounded-xl bg-[#f8f6f3] border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/40 transition-all ${errors.employeeId ? "border-red-300 bg-red-50/50" : "border-[#e8e4dd] focus:border-[#4a7c59]/40"}`}
                   />
                   {errors.employeeId && <p className="text-[11px] text-red-500">{errors.employeeId}</p>}
+                  {employeeStep === "id" ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Returning employee? We’ll recognize you instantly.
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground">
+                      First time here—tell Charles a little about you.
+                    </p>
+                  )}
                 </div>
 
-                {/* Full Name */}
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="What should Charles call you?"
-                    value={employeeName}
-                    onChange={(e) => { setEmployeeName(e.target.value); setErrors(p => ({ ...p, employeeName: "" })); }}
-                    autoComplete="off"
-                    className={`w-full h-12 px-4 rounded-xl bg-[#f8f6f3] border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/40 transition-all ${errors.employeeName ? "border-red-300 bg-red-50/50" : "border-[#e8e4dd] focus:border-[#4a7c59]/40"}`}
-                  />
-                  {errors.employeeName && <p className="text-[11px] text-red-500">{errors.employeeName}</p>}
-                </div>
+                {employeeStep === "details" && (
+                  <>
+                    {/* Full Name */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="What should Charles call you?"
+                        value={employeeName}
+                        onChange={(e) => { setEmployeeName(e.target.value); setErrors(p => ({ ...p, employeeName: "" })); }}
+                        autoComplete="off"
+                        className={`w-full h-12 px-4 rounded-xl bg-[#f8f6f3] border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/40 transition-all ${errors.employeeName ? "border-red-300 bg-red-50/50" : "border-[#e8e4dd] focus:border-[#4a7c59]/40"}`}
+                      />
+                      {errors.employeeName && <p className="text-[11px] text-red-500">{errors.employeeName}</p>}
+                    </div>
 
-                {/* Department */}
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Department
-                  </label>
-                  <select
-                    value={department}
-                    onChange={(e) => { setDepartment(e.target.value); setErrors(p => ({ ...p, department: "" })); }}
-                    className={`w-full h-12 px-4 rounded-xl bg-[#f8f6f3] border text-sm focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/40 transition-all appearance-none cursor-pointer ${department ? "text-foreground" : "text-muted-foreground/50"} ${errors.department ? "border-red-300 bg-red-50/50" : "border-[#e8e4dd] focus:border-[#4a7c59]/40"}`}
-                  >
-                    <option value="" disabled>Select your department</option>
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                  {errors.department && <p className="text-[11px] text-red-500">{errors.department}</p>}
-                </div>
+                    {/* Department */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        Department
+                      </label>
+                      <select
+                        value={department}
+                        onChange={(e) => { setDepartment(e.target.value); setErrors(p => ({ ...p, department: "" })); }}
+                        className={`w-full h-12 px-4 rounded-xl bg-[#f8f6f3] border text-sm focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/40 transition-all appearance-none cursor-pointer ${department ? "text-foreground" : "text-muted-foreground/50"} ${errors.department ? "border-red-300 bg-red-50/50" : "border-[#e8e4dd] focus:border-[#4a7c59]/40"}`}
+                      >
+                        <option value="" disabled>Select your department</option>
+                        {DEPARTMENTS.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                      {errors.department && <p className="text-[11px] text-red-500">{errors.department}</p>}
+                    </div>
+                  </>
+                )}
 
                 {/* Submit */}
                 <motion.button
                   type="submit"
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
+                  disabled={isCheckingProfile}
                   className="w-full h-12 mt-2 rounded-xl bg-[#4a7c59] text-white text-sm font-semibold tracking-wide hover:bg-[#3d6b4a] transition-colors shadow-md shadow-[#4a7c59]/20"
                 >
-                  Check In
+                  {isCheckingProfile ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Checking…
+                    </span>
+                  ) : employeeStep === "id" ? (
+                    "Continue"
+                  ) : (
+                    "Continue"
+                  )}
                 </motion.button>
               </form>
             </TabsContent>
