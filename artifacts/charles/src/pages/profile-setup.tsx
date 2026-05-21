@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Camera, Mail, Phone, Building2, BadgeCheck, Loader2 } from "lucide-react";
+import { Camera, Mail, Phone, Building2, BadgeCheck, Loader2, RotateCcw, ZoomIn } from "lucide-react";
 import { useEmployee } from "@/context/employee-context";
 import { MiniLeafMark } from "@/components/mini-leaf-mark";
 import { Bonsai } from "@/components/bonsai";
 import { useToast } from "@/hooks/use-toast";
 import { useUpsertEmployeeProfile } from "@workspace/api-client-react";
+import Cropper, { type Area } from "react-easy-crop";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Dialog, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 
 import welcomeBonsai from "@assets/Happy_Wave_Bonsai_1779333623327.png";
 
@@ -37,6 +42,55 @@ async function compressImage(file: File, maxSize = 640, quality = 0.84): Promise
   return blob;
 }
 
+async function createCroppedAvatar(
+  imageSrc: string,
+  pixelCrop: Area,
+  outSize = 512,
+): Promise<Blob> {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = imageSrc;
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error("Failed to load image"));
+  });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = outSize;
+  canvas.height = outSize;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas not supported");
+
+  ctx.clearRect(0, 0, outSize, outSize);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(outSize / 2, outSize / 2, outSize / 2, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+
+  const scaleX = img.naturalWidth / img.width;
+  const scaleY = img.naturalHeight / img.height;
+
+  ctx.drawImage(
+    img,
+    pixelCrop.x * scaleX,
+    pixelCrop.y * scaleY,
+    pixelCrop.width * scaleX,
+    pixelCrop.height * scaleY,
+    0,
+    0,
+    outSize,
+    outSize,
+  );
+  ctx.restore();
+
+  const blob: Blob | null = await new Promise((resolve) =>
+    canvas.toBlob(resolve, "image/png"),
+  );
+  if (!blob) throw new Error("Failed to create cropped image");
+  return blob;
+}
+
 export default function ProfileSetup() {
   const [, setLocation] = useLocation();
   const { employee, setEmployee, profile, setProfile } = useEmployee();
@@ -51,6 +105,15 @@ export default function ProfileSetup() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarIsCropped, setAvatarIsCropped] = useState(false);
+
+  const [photoEditorOpen, setPhotoEditorOpen] = useState(false);
+  const [rawPhotoUrl, setRawPhotoUrl] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [isSavingPhoto, setIsSavingPhoto] = useState(false);
+  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
 
   const upsertProfile = useUpsertEmployeeProfile();
 
@@ -66,14 +129,39 @@ export default function ProfileSetup() {
   }, [profile]);
 
   useEffect(() => {
-    if (!avatarFile) {
-      setAvatarPreviewUrl(null);
-      return;
-    }
+    if (!avatarFile) return;
     const url = URL.createObjectURL(avatarFile);
     setAvatarPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [avatarFile]);
+
+  // Live preview for crop modal (debounced)
+  useEffect(() => {
+    if (!photoEditorOpen || !rawPhotoUrl || !croppedAreaPixels) {
+      setCroppedPreviewUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+    const t = window.setTimeout(async () => {
+      try {
+        const blob = await createCroppedAvatar(rawPhotoUrl, croppedAreaPixels, 224);
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        setCroppedPreviewUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
+      } catch {
+        // ignore preview failures
+      }
+    }, 120);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [photoEditorOpen, rawPhotoUrl, croppedAreaPixels]);
 
   const initials = useMemo(() => {
     const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -96,9 +184,14 @@ export default function ProfileSetup() {
 
     setIsUploadingAvatar(true);
     try {
-      const blob = await compressImage(avatarFile);
       const form = new FormData();
-      form.append("file", new File([blob], "avatar.jpg", { type: "image/jpeg" }));
+
+      if (avatarIsCropped) {
+        form.append("file", avatarFile);
+      } else {
+        const blob = await compressImage(avatarFile);
+        form.append("file", new File([blob], "avatar.jpg", { type: "image/jpeg" }));
+      }
 
       const resp = await fetch(resolveApiUrl(`/api/profiles/${encodeURIComponent(employeeId.trim())}/avatar`), {
         method: "POST",
@@ -114,6 +207,55 @@ export default function ProfileSetup() {
       return data.url ?? null;
     } finally {
       setIsUploadingAvatar(false);
+    }
+  };
+
+  const openEditorForFile = (file: File) => {
+    setAvatarIsCropped(false);
+    const url = URL.createObjectURL(file);
+    setRawPhotoUrl(url);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+    setPhotoEditorOpen(true);
+  };
+
+  const closeEditor = () => {
+    setPhotoEditorOpen(false);
+    if (rawPhotoUrl) URL.revokeObjectURL(rawPhotoUrl);
+    setRawPhotoUrl(null);
+    setCroppedPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  };
+
+  const handleSaveCroppedPhoto = async () => {
+    if (!rawPhotoUrl || !croppedAreaPixels) {
+      toast({
+        title: "Adjust your photo",
+        description: "Move and zoom the photo to fit the circle, then tap Save Photo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingPhoto(true);
+    try {
+      const blob = await createCroppedAvatar(rawPhotoUrl, croppedAreaPixels, 512);
+      const file = new File([blob], "avatar.png", { type: "image/png" });
+      setAvatarFile(file);
+      setAvatarIsCropped(true);
+      closeEditor();
+      toast({ title: "Photo saved", description: "Looking good." });
+    } catch (err) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message?: unknown }).message)
+          : "Please try again.";
+      toast({ title: "Couldn’t save photo", description: message, variant: "destructive" });
+    } finally {
+      setIsSavingPhoto(false);
     }
   };
 
@@ -206,8 +348,16 @@ export default function ProfileSetup() {
 
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="mt-3 w-28 h-28 rounded-[28px] bg-white/70 border border-white/80 shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden relative"
+                onClick={() => {
+                  if (avatarPreviewUrl) {
+                    // Re-edit current photo
+                    if (avatarFile) openEditorForFile(avatarFile);
+                    else fileInputRef.current?.click();
+                  } else {
+                    fileInputRef.current?.click();
+                  }
+                }}
+                className="mt-3 w-28 h-28 rounded-full bg-white/70 border border-white/80 shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden relative"
               >
                 {avatarPreviewUrl ? (
                   <img src={avatarPreviewUrl} alt="Profile preview" className="w-full h-full object-cover" />
@@ -235,7 +385,13 @@ export default function ProfileSetup() {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  // allow reselecting same file
+                  e.currentTarget.value = "";
+                  if (!file) return;
+                  openEditorForFile(file);
+                }}
               />
             </div>
           </div>
@@ -337,7 +493,119 @@ export default function ProfileSetup() {
           </div>
         </div>
       </motion.div>
+
+      {/* Edit Profile Photo Modal */}
+      <Dialog open={photoEditorOpen} onOpenChange={(open) => (open ? setPhotoEditorOpen(true) : closeEditor())}>
+        <DialogPortal>
+          <DialogOverlay className="bg-black/35 backdrop-blur-sm" />
+          <DialogPrimitive.Content
+            className={cn(
+              "fixed left-[50%] top-[50%] z-50 w-[min(92vw,720px)] translate-x-[-50%] translate-y-[-50%]",
+              "rounded-3xl border border-black/[0.06] bg-[#f7f4ef] shadow-[0_18px_70px_rgba(0,0,0,0.18)]",
+              "p-0 overflow-hidden focus:outline-none",
+            )}
+          >
+            <div className="px-6 pt-6 pb-4 border-b border-black/[0.06]">
+              <div className="font-serif text-xl text-[#1f3a2b]">Edit Profile Photo</div>
+              <div className="mt-1 text-sm text-[#7a8b7e]">
+                Drag to reposition. Use the slider to zoom.
+              </div>
+            </div>
+
+            <div className="p-6 grid grid-cols-1 md:grid-cols-5 gap-6">
+              <div className="md:col-span-3">
+                <div className="relative w-full aspect-square rounded-3xl bg-white border border-black/[0.06] overflow-hidden">
+                  {rawPhotoUrl && (
+                    <Cropper
+                      image={rawPhotoUrl}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      cropShape="round"
+                      showGrid={false}
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onCropComplete={(_area, areaPixels) => setCroppedAreaPixels(areaPixels)}
+                      restrictPosition={false}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="md:col-span-2 flex flex-col gap-5">
+                {/* Live circular preview */}
+                <div className="rounded-3xl border border-black/[0.06] bg-white/60 p-5">
+                  <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Preview</div>
+                  <div className="mt-4 flex items-center justify-center">
+                    <div className="w-28 h-28 rounded-full bg-[#dfe7db]/40 border border-black/[0.06] overflow-hidden shadow-sm flex items-center justify-center">
+                      {croppedPreviewUrl ? (
+                        <img src={croppedPreviewUrl} alt="Cropped preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="font-semibold text-[#4a7c59]">{initials}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-4 text-xs text-muted-foreground text-center">
+                    Live preview updates as you adjust.
+                  </div>
+                </div>
+
+                {/* Controls */}
+                <div className="rounded-3xl border border-black/[0.06] bg-white/60 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Zoom</div>
+                    <div className="text-xs text-muted-foreground tabular-nums">{zoom.toFixed(2)}×</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ZoomIn className="w-4 h-4 text-muted-foreground" />
+                    <Slider
+                      value={[zoom]}
+                      min={1}
+                      max={3}
+                      step={0.01}
+                      onValueChange={(v) => setZoom(v[0] ?? 1)}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCrop({ x: 0, y: 0 });
+                      setZoom(1);
+                    }}
+                    className="w-full h-11 rounded-2xl border border-black/[0.06] bg-white hover:bg-white/80 transition-colors text-sm font-medium inline-flex items-center justify-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-5 border-t border-black/[0.06] flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={closeEditor}
+                className="h-12 px-5 rounded-2xl border border-black/[0.06] bg-white/70 hover:bg-white transition-colors text-sm font-medium"
+              >
+                Cancel
+              </button>
+
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSaveCroppedPhoto}
+                disabled={isSavingPhoto}
+                className="h-12 px-6 rounded-2xl bg-[#4a7c59] text-white text-sm font-semibold tracking-wide hover:bg-[#3d6b4a] transition-colors shadow-md shadow-[#4a7c59]/20 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+              >
+                {isSavingPhoto && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save Photo
+              </motion.button>
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </Dialog>
     </div>
   );
 }
-
