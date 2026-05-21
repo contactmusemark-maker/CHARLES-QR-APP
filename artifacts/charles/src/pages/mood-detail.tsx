@@ -110,10 +110,14 @@ export default function MoodDetail() {
         },
       });
       setLocation("/success");
-    } catch {
+    } catch (err) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message?: unknown }).message)
+          : null;
       toast({
         title: "Check-in failed",
-        description: "Please try again in a moment.",
+        description: message ?? "Please try again in a moment.",
         variant: "destructive",
       });
     }
