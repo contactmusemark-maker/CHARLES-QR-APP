@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { Fragment, useEffect, useMemo, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useEmployee } from "@/context/employee-context";
 import { PageTransition } from "@/components/page-transition";
@@ -47,10 +47,13 @@ import {
   TrendingDown,
   Minus,
   Building2,
+  ChevronDown,
+  ChevronUp,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import studyBonsai from "@assets/Study_-_Work_Bonsai_1779333623328.png";
 import { isAdminAuthed, setAdminAuthed } from "@/lib/admin-auth";
@@ -170,6 +173,7 @@ export default function Admin() {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [expandedCheckinId, setExpandedCheckinId] = useState<number | null>(null);
 
   const dateParam = format(selectedDate, "yyyy-MM-dd");
   const isToday = dateParam === format(new Date(), "yyyy-MM-dd");
@@ -547,9 +551,31 @@ export default function Admin() {
                     <tbody className="divide-y divide-border/40">
                       {checkins.map((c) => {
                         const moodColor = MOOD_COLORS[c.mood.charAt(0).toUpperCase() + c.mood.slice(1)];
+                        const isExpanded = expandedCheckinId === c.id;
+                        const noteText = typeof c.note === "string" ? c.note.trim() : "";
+                        const noteRegionId = `checkin-note-${c.id}`;
+
                         return (
-                          <tr key={c.id} className="hover:bg-white/40 transition-colors">
-                            <td className="py-3 pr-4 font-medium">{c.employeeName}</td>
+                          <Fragment key={c.id}>
+                          <tr className="hover:bg-white/50 transition-colors">
+                            <td className="py-3 pr-4 font-medium">
+                              <button
+                                type="button"
+                                className="w-full inline-flex items-center gap-2 text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a7c59]/35"
+                                aria-expanded={isExpanded}
+                                aria-controls={noteRegionId}
+                                onClick={() => setExpandedCheckinId((prev) => (prev === c.id ? null : c.id))}
+                              >
+                                <motion.span
+                                  className="shrink-0 w-7 h-7 rounded-full bg-[#dfe7db]/70 text-[#4a7c59] flex items-center justify-center"
+                                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                                  transition={{ duration: 0.22, ease: "easeOut" }}
+                                >
+                                  {isExpanded ? <ChevronUp className="w-4 h-4 -rotate-180" /> : <ChevronDown className="w-4 h-4" />}
+                                </motion.span>
+                                <span className="truncate">{c.employeeName}</span>
+                              </button>
+                            </td>
                             <td className="py-3 pr-4 text-muted-foreground font-mono text-xs">{c.employeeId}</td>
                             <td className="py-3 pr-4">
                               <span
@@ -577,6 +603,47 @@ export default function Admin() {
                               {format(new Date(c.checkedInAt), "h:mm a")}
                             </td>
                           </tr>
+                          <AnimatePresence initial={false}>
+                            {isExpanded && (
+                              <tr className="bg-transparent">
+                                <td colSpan={8} className="p-0">
+                                  <motion.div
+                                    id={noteRegionId}
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="px-3 pb-4">
+                                      <div className="rounded-2xl border border-black/[0.04] bg-[#f7f4ef]/70 shadow-sm px-4 py-3">
+                                        <div className="flex items-start gap-3">
+                                          <div className="mt-0.5 shrink-0 w-8 h-8 rounded-full bg-[#dfe7db] text-[#4a7c59] flex items-center justify-center">
+                                            <Mail className="w-4 h-4" />
+                                          </div>
+                                          <div className="min-w-0">
+                                            <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                                              Anything Charles should know?
+                                            </div>
+                                            {noteText ? (
+                                              <p className="mt-1.5 text-sm text-foreground leading-relaxed">
+                                                “{noteText}”
+                                              </p>
+                                            ) : (
+                                              <p className="mt-1.5 text-sm text-muted-foreground">
+                                                No additional notes.
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                </td>
+                              </tr>
+                            )}
+                          </AnimatePresence>
+                          </Fragment>
                         );
                       })}
                     </tbody>
