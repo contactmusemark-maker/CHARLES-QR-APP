@@ -466,13 +466,23 @@ export default function Admin() {
             </Button>
           </div>
         </div>
-      </header>
+	      </header>
 
-      <main className="container px-4 md:px-8 py-8 max-w-7xl mx-auto">
-	        <PageTransition className="space-y-6">
+	      <main className="container px-4 md:px-8 py-8 max-w-7xl mx-auto">
+	        {/* Mobile page label */}
+	        <div className="xl:hidden mb-4">
+	          <div className="text-xl font-serif tracking-tight text-[#1f3a2b]">
+	            Charles Admin Panel
+	          </div>
+	          <div className="mt-1 text-xs text-[#7a8b7e]">
+	            Live wellness overview • check-ins • activity
+	          </div>
+	        </div>
 
-	          {/* Date context banner (when viewing past) */}
-	          {!isToday && (
+		        <PageTransition className="space-y-6">
+
+		          {/* Date context banner (when viewing past) */}
+		          {!isToday && (
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
               <CalendarIcon className="w-4 h-4 shrink-0" />
               <span>Viewing data for <strong>{format(selectedDate, "EEEE, MMMM d, yyyy")}</strong></span>
