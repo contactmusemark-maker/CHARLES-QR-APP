@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, subDays, addDays, startOfWeek, endOfWeek, formatDistanceToNowStrict } from "date-fns";
 import {
   useGetCheckinSummary,
@@ -247,6 +248,8 @@ export default function Admin() {
     }
   );
 
+  const [mobileTab, setMobileTab] = useState<"overview" | "checkins" | "activity">("overview");
+
   const activeProfileId = profileEmployeeId ?? "";
   const profileEnabled = allowed && profileOpen && Boolean(profileEmployeeId);
 
@@ -437,10 +440,10 @@ export default function Admin() {
       </header>
 
       <main className="container px-4 md:px-8 py-8 max-w-7xl mx-auto">
-        <PageTransition className="space-y-6">
+	        <PageTransition className="space-y-6">
 
-          {/* Date context banner (when viewing past) */}
-          {!isToday && (
+	          {/* Date context banner (when viewing past) */}
+	          {!isToday && (
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
               <CalendarIcon className="w-4 h-4 shrink-0" />
               <span>Viewing data for <strong>{format(selectedDate, "EEEE, MMMM d, yyyy")}</strong></span>
@@ -453,7 +456,313 @@ export default function Admin() {
             </div>
 	          )}
 
-	          <div className="grid xl:grid-cols-[1fr_360px] gap-6 items-start">
+	          {/* Mobile Admin Panel Tabs */}
+	          <div className="xl:hidden">
+	            <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as typeof mobileTab)}>
+	              <TabsList className="w-full h-10 rounded-2xl bg-white/60 border border-white/60 backdrop-blur-sm shadow-sm p-1">
+	                <TabsTrigger value="overview" className="flex-1 rounded-xl text-xs">
+	                  Overview
+	                </TabsTrigger>
+	                <TabsTrigger value="checkins" className="flex-1 rounded-xl text-xs">
+	                  Check-ins
+	                </TabsTrigger>
+	                <TabsTrigger value="activity" className="flex-1 rounded-xl text-xs">
+	                  Activity
+	                </TabsTrigger>
+	              </TabsList>
+	
+	              <TabsContent value="overview" className="mt-4 space-y-6">
+	                {/* Top Stats Row */}
+	                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+	                  <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm">
+	                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+	                      <CardTitle className="text-sm font-medium">Wellness Score</CardTitle>
+	                      <Heart className="h-4 w-4 text-[#4a7c59]" />
+	                    </CardHeader>
+	                    <CardContent>
+	                      {isLoadingSummary ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+	                        <div className="text-3xl font-serif">{summary?.teamWellnessScore?.toFixed(1) ?? "—"}</div>
+	                      )}
+	                      <p className="text-xs text-muted-foreground mt-1">Out of 10.0</p>
+	                    </CardContent>
+	                  </Card>
+	
+	                  <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm">
+	                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+	                      <CardTitle className="text-sm font-medium">Avg Energy</CardTitle>
+	                      <Zap className="h-4 w-4 text-amber-500" />
+	                    </CardHeader>
+	                    <CardContent>
+	                      {isLoadingSummary ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+	                        <div className="text-3xl font-serif">{summary?.averageEnergy?.toFixed(1) ?? "—"}</div>
+	                      )}
+	                      <p className="text-xs text-muted-foreground mt-1">Energy level</p>
+	                    </CardContent>
+	                  </Card>
+	
+	                  <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm">
+	                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+	                      <CardTitle className="text-sm font-medium">Burnout Risk</CardTitle>
+	                      <ShieldAlert className="h-4 w-4 text-red-500" />
+	                    </CardHeader>
+	                    <CardContent>
+	                      {isLoadingSummary ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+	                        <div className={`text-3xl font-serif ${(summary?.burnoutRiskCount ?? 0) > 0 ? "text-red-600" : ""}`}>
+	                          {summary?.burnoutRiskCount ?? 0}
+	                        </div>
+	                      )}
+	                      <p className="text-xs text-muted-foreground mt-1">Flagged</p>
+	                    </CardContent>
+	                  </Card>
+	
+	                  <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm">
+	                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+	                      <CardTitle className="text-sm font-medium">Check-ins</CardTitle>
+	                      <Users className="h-4 w-4 text-muted-foreground" />
+	                    </CardHeader>
+	                    <CardContent>
+	                      {isLoadingSummary ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+	                        <div className="text-3xl font-serif">{summary?.totalCheckins ?? 0}</div>
+	                      )}
+	                      <p className="text-xs text-muted-foreground mt-1">{isToday ? "Today" : "That day"}</p>
+	                    </CardContent>
+	                  </Card>
+	                </div>
+	
+	                <DailyInsights
+	                  date={selectedDate}
+	                  checkins={checkins ?? []}
+	                  summary={summary}
+	                  accent={accent}
+	                />
+	
+	                {/* Charts Row */}
+	                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+	                  {/* Mood Distribution */}
+	                  <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm flex flex-col">
+	                    <CardHeader>
+	                      <CardTitle className="text-lg font-serif">How the team feels</CardTitle>
+	                      <CardDescription>
+	                        {isToday ? "Today's mood distribution" : `Mood distribution — ${format(selectedDate, "MMM d")}`}
+	                      </CardDescription>
+	                    </CardHeader>
+	                    <CardContent className="flex-1 min-h-[260px]">
+	                      {isLoadingSummary ? (
+	                        <div className="w-full h-full flex items-center justify-center">
+	                          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+	                        </div>
+	                      ) : moodChartData.length === 0 ? (
+	                        <div className="w-full h-full flex items-center justify-center">
+	                          <div className="text-center px-6">
+	                            <div className="inline-flex items-center gap-2 rounded-full bg-white/70 border border-black/[0.05] px-3 py-1.5 shadow-sm">
+	                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accent }} />
+	                              <span className="text-xs font-semibold text-muted-foreground">Waiting for the first check-in</span>
+	                            </div>
+	                            <div className="mt-3 font-serif text-xl text-[#1f3a2b]">No check-ins yet</div>
+	                            <div className="mt-1 text-xs text-[#7a8b7e]">The chart will come alive as the team checks in.</div>
+	                          </div>
+	                        </div>
+	                      ) : (
+	                        <ResponsiveContainer width="100%" height="100%">
+	                          <BarChart data={moodChartData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+	                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+	                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+	                            <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+	                            <Tooltip
+	                              cursor={{ fill: "rgba(0,0,0,0.04)" }}
+	                              contentStyle={{ borderRadius: "0.75rem", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
+	                            />
+	                            <Bar dataKey="count" radius={[8, 8, 0, 0]} />
+	                          </BarChart>
+	                        </ResponsiveContainer>
+	                      )}
+	                    </CardContent>
+	                  </Card>
+	
+	                  {/* Weekly Wellness Trend */}
+	                  <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm">
+	                    <CardHeader>
+	                      <CardTitle className="text-lg font-serif flex items-center gap-2">
+	                        {wellnessTrend === "up" ? <TrendingUp className="w-5 h-5 text-[#4a7c59]" /> : wellnessTrend === "down" ? <TrendingDown className="w-5 h-5 text-red-500" /> : <Minus className="w-5 h-5 text-muted-foreground" />}
+	                        Weekly wellness trend
+	                      </CardTitle>
+	                      <CardDescription>Team wellness score over the last 7 days</CardDescription>
+	                    </CardHeader>
+	                    <CardContent className="min-h-[260px]">
+	                      {isLoadingTrends ? (
+	                        <div className="w-full h-full flex items-center justify-center">
+	                          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+	                        </div>
+	                      ) : !trendChartData.length ? (
+	                        <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+	                          No trend data yet.
+	                        </div>
+	                      ) : (
+	                        <ResponsiveContainer width="100%" height={240}>
+	                          <LineChart data={trendChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+	                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+	                            <XAxis dataKey="shortDate" axisLine={false} tickLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+	                            <YAxis domain={[0, 10]} axisLine={false} tickLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+	                            <Tooltip
+	                              contentStyle={{ borderRadius: "0.75rem", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
+	                            />
+	                            <ReferenceLine y={7} stroke="#4a7c59" strokeDasharray="3 3" strokeOpacity={0.35} />
+	                            <Line type="monotone" dataKey="averageWellness" stroke={accent} strokeWidth={2.5} dot={false} />
+	                          </LineChart>
+	                        </ResponsiveContainer>
+	                      )}
+	                    </CardContent>
+	                  </Card>
+	                </div>
+	              </TabsContent>
+	
+	              <TabsContent value="checkins" className="mt-4 space-y-6">
+	                {/* Check-in Log for selected date */}
+	                <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm">
+	                  <CardHeader>
+	                    <CardTitle className="text-lg font-serif flex items-center gap-2">
+	                      <Users className="w-5 h-5 text-muted-foreground" />
+	                      {isToday ? "Today's Check-ins" : `Check-ins — ${format(selectedDate, "MMMM d, yyyy")}`}
+	                    </CardTitle>
+	                    <CardDescription>All employee submissions for this day</CardDescription>
+	                  </CardHeader>
+	                  <CardContent>
+	                    {isLoadingCheckins ? (
+	                      <div className="flex items-center justify-center py-10">
+	                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+	                      </div>
+	                    ) : !checkins || checkins.length === 0 ? (
+	                      <AdminEmptyState date={selectedDate} isToday={isToday} accent={accent} mascotSrc={studyBonsai} />
+	                    ) : (
+	                      <div className="overflow-x-auto">
+	                        <table className="w-full text-sm">
+	                          <thead>
+	                            <tr className="border-b text-xs text-muted-foreground uppercase tracking-wider">
+	                              <th className="text-left py-2 pr-4 font-medium">Employee</th>
+	                              <th className="text-left py-2 pr-4 font-medium">ID</th>
+	                              <th className="text-left py-2 pr-4 font-medium">Mood</th>
+	                              <th className="text-center py-2 pr-4 font-medium">Energy</th>
+	                              <th className="text-center py-2 pr-4 font-medium">Focus</th>
+	                              <th className="text-center py-2 pr-4 font-medium">Stress</th>
+	                              <th className="text-left py-2 pr-4 font-medium">Tags</th>
+	                              <th className="text-left py-2 font-medium">Time</th>
+	                            </tr>
+	                          </thead>
+	                          <tbody className="divide-y divide-border/40">
+	                            {checkins.map((c) => {
+	                              const moodColor = MOOD_COLORS[c.mood.charAt(0).toUpperCase() + c.mood.slice(1)];
+	                              const isExpanded = expandedCheckinId === c.id;
+	                              const noteText = typeof c.note === "string" ? c.note.trim() : "";
+	                              const noteRegionId = `checkin-note-${c.id}`;
+	
+	                              return (
+	                                <Fragment key={c.id}>
+	                                  <tr
+	                                    className="hover:bg-white/50 transition-colors cursor-pointer"
+	                                    onClick={() => {
+	                                      setProfileEmployeeId(c.employeeId);
+	                                      setProfileOpen(true);
+	                                    }}
+	                                  >
+	                                    <td className="py-3 pr-4 font-medium">
+	                                      <div className="w-full flex items-center gap-2">
+	                                        <button
+	                                          type="button"
+	                                          className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#dfe7db]/60 text-[#4a7c59] hover:bg-[#dfe7db]/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a7c59]/35"
+	                                          aria-expanded={isExpanded}
+	                                          aria-controls={noteRegionId}
+	                                          onClick={(e) => {
+	                                            e.stopPropagation();
+	                                            setExpandedCheckinId((prev) => (prev === c.id ? null : c.id));
+	                                          }}
+	                                          aria-label={isExpanded ? "Collapse notes" : "Expand notes"}
+	                                        >
+	                                          <motion.span
+	                                            animate={{ rotate: isExpanded ? 180 : 0 }}
+	                                            transition={{ duration: 0.22, ease: "easeOut" }}
+	                                            className="inline-flex"
+	                                          >
+	                                            {isExpanded ? <ChevronUp className="w-4 h-4 -rotate-180" /> : <ChevronDown className="w-4 h-4" />}
+	                                          </motion.span>
+	                                        </button>
+	
+	                                        <span className="truncate">{c.employeeName}</span>
+	                                      </div>
+	                                    </td>
+	                                    <td className="py-3 pr-4 text-muted-foreground font-mono">{c.employeeId}</td>
+	                                    <td className="py-3 pr-4">
+	                                      <span className="text-xs font-medium px-2 py-0.5 rounded-full text-white capitalize" style={{ backgroundColor: moodColor }}>
+	                                        {c.mood}
+	                                      </span>
+	                                    </td>
+	                                    <td className="py-3 pr-4 text-center tabular-nums">{c.energyLevel ?? "—"}</td>
+	                                    <td className="py-3 pr-4 text-center tabular-nums">{c.focusLevel ?? "—"}</td>
+	                                    <td className="py-3 pr-4 text-center tabular-nums">{c.stressLevel ?? "—"}</td>
+	                                    <td className="py-3 pr-4 text-muted-foreground">
+	                                      <div className="flex flex-wrap gap-1.5">
+	                                        {(c.tags ?? []).slice(0, 2).map((t) => (
+	                                          <span key={t} className="text-[11px] px-2 py-0.5 rounded-full bg-muted/60 border border-border/50">
+	                                            {t}
+	                                          </span>
+	                                        ))}
+	                                        {(c.tags?.length ?? 0) > 2 && (
+	                                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted/60 border border-border/50">
+	                                            +{(c.tags?.length ?? 0) - 2}
+	                                          </span>
+	                                        )}
+	                                      </div>
+	                                    </td>
+	                                    <td className="py-3 text-muted-foreground tabular-nums">
+	                                      {format(new Date(c.checkedInAt), "h:mm a")}
+	                                    </td>
+	                                  </tr>
+	
+	                                  <tr className="bg-white/20">
+	                                    <td colSpan={8} className="p-0">
+	                                      <AnimatePresence initial={false}>
+	                                        {isExpanded && (
+	                                          <motion.div
+	                                            id={noteRegionId}
+	                                            role="region"
+	                                            initial={{ height: 0, opacity: 0 }}
+	                                            animate={{ height: "auto", opacity: 1 }}
+	                                            exit={{ height: 0, opacity: 0 }}
+	                                            transition={{ duration: 0.25, ease: "easeOut" }}
+	                                            className="overflow-hidden"
+	                                          >
+	                                            <div className="px-4 py-3">
+	                                              <div className="rounded-2xl border bg-white/70 px-4 py-3 shadow-sm">
+	                                                <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+	                                                  Employee note
+	                                                </div>
+	                                                <div className="mt-2 text-sm text-foreground leading-relaxed">
+	                                                  {noteText ? `“${noteText}”` : <span className="text-muted-foreground">No additional notes.</span>}
+	                                                </div>
+	                                              </div>
+	                                            </div>
+	                                          </motion.div>
+	                                        )}
+	                                      </AnimatePresence>
+	                                    </td>
+	                                  </tr>
+	                                </Fragment>
+	                              );
+	                            })}
+	                          </tbody>
+	                        </table>
+	                      </div>
+	                    )}
+	                  </CardContent>
+	                </Card>
+	              </TabsContent>
+	
+	              <TabsContent value="activity" className="mt-4 space-y-6">
+	                <LiveActivityFeed checkins={checkins ?? []} accent={accent} isLive={isToday} resetKey={dateParam} />
+	              </TabsContent>
+	            </Tabs>
+	          </div>
+
+	          <div className="hidden xl:grid xl:grid-cols-[1fr_360px] gap-6 items-start">
 	            <div className="space-y-6">
 
 	          {/* Top Stats Row */}

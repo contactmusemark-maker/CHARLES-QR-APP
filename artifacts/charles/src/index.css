@@ -121,9 +121,9 @@
   --chart-4: 0 0% 60%;
   --chart-5: 240 10% 40%;
 
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
+  --app-font-sans: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --app-font-serif: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Liberation Mono', 'Courier New', monospace;
+  --app-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   --radius: 1rem;
   
   --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.05);
