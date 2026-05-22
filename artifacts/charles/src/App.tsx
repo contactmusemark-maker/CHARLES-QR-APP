@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { EmployeeProvider } from "@/context/employee-context";
 import { AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { SplashScreen } from "@/components/splash-screen";
 
 import NotFound from "@/pages/not-found";
 import Welcome from "@/pages/welcome";
@@ -38,12 +40,14 @@ function Router() {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <EmployeeProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
+            {showSplash ? <SplashScreen onDone={() => setShowSplash(false)} /> : <Router />}
           </WouterRouter>
         </EmployeeProvider>
         <Toaster />
