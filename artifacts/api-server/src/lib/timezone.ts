@@ -41,3 +41,9 @@ export function formatLocalDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+export function getBusinessTimeZone(): string {
+  const raw = process.env["BUSINESS_TZ"] ?? "Asia/Kolkata";
+  // Basic hardening: allow only common IANA timezone characters.
+  const ok = /^[A-Za-z0-9_+\-\/]+$/.test(raw);
+  return ok ? raw : "Asia/Kolkata";
+}

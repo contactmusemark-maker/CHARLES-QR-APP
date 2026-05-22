@@ -1,14 +1,20 @@
 import { Router } from "express";
 import { db, checkinsTable } from "@workspace/db";
-import { desc, sql } from "drizzle-orm";
+import { desc, sql, eq } from "drizzle-orm";
 import {
   ListCheckinsQueryParams,
   CreateCheckinBody,
   GetCheckinSummaryQueryParams,
 } from "@workspace/api-zod";
-import { localDateToUtcRange, parseTzOffsetMinutes } from "../lib/timezone";
+import { getBusinessTimeZone, localDateToUtcRange, parseTzOffsetMinutes } from "../lib/timezone";
 
 const router = Router();
+
+function tzSqlLiteral(tz: string) {
+  // `getBusinessTimeZone()` returns a hardened value; escape anyway.
+  const escaped = tz.replace(/'/g, "''");
+  return sql.raw(`'${escaped}'`);
+}
 
 function getDateRange(dateStr?: string, tzOffsetMinutes?: number | null): { start: Date; end: Date } {
   if (dateStr && typeof tzOffsetMinutes === "number") {
@@ -33,6 +39,27 @@ const moodWeights: Record<string, number> = {
   exhausted: 2,
 };
 
+async function findTodaysCheckin(employeeId: string) {
+  const tz = getBusinessTimeZone();
+  const tzLit = tzSqlLiteral(tz);
+
+  const rows = await db
+    .select()
+    .from(checkinsTable)
+    .where(
+      sql`LOWER(${checkinsTable.employeeId}) = LOWER(${employeeId})
+        AND DATE(${checkinsTable.checkedInAt} AT TIME ZONE ${tzLit}) = DATE(NOW() AT TIME ZONE ${tzLit})`,
+    )
+    .orderBy(desc(checkinsTable.checkedInAt))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
+async function hasCheckedInToday(employeeId: string) {
+  return (await findTodaysCheckin(employeeId)) !== null;
+}
+
 // GET /checkins
 router.get("/checkins", async (req, res) => {
   const parsed = ListCheckinsQueryParams.safeParse(req.query);
@@ -55,6 +82,37 @@ router.post("/checkins", async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: "Invalid request body", details: parsed.error.issues });
 
   const data = parsed.data;
+  const intent = data.intent ?? "create";
+
+  const existing = await findTodaysCheckin(data.employeeId);
+  if (existing && intent !== "update") {
+    return res.status(200).json({
+      alreadyCheckedIn: true as const,
+      employeeName: existing.employeeName,
+      checkedInAt: existing.checkedInAt.toISOString(),
+      mood: existing.mood,
+    });
+  }
+
+  if (existing && intent === "update") {
+    const [updated] = await db
+      .update(checkinsTable)
+      .set({
+        employeeName: data.employeeName,
+        department: data.department ?? null,
+        mood: data.mood,
+        energyLevel: data.energyLevel ?? null,
+        focusLevel: data.focusLevel ?? null,
+        stressLevel: data.stressLevel ?? null,
+        tags: data.tags ?? [],
+        note: data.note ?? null,
+      })
+      .where(eq(checkinsTable.id, existing.id))
+      .returning();
+
+    return res.status(200).json({ ...updated, checkedInAt: updated.checkedInAt.toISOString() });
+  }
+
   const [created] = await db
     .insert(checkinsTable)
     .values({
@@ -70,7 +128,7 @@ router.post("/checkins", async (req, res) => {
     })
     .returning();
 
-  return res.status(201).json({ ...created, checkedInAt: created.checkedInAt.toISOString() });
+  return res.status(200).json({ ...created, checkedInAt: created.checkedInAt.toISOString() });
 });
 
 // GET /checkins/summary

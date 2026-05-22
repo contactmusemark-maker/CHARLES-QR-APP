@@ -1,11 +1,13 @@
 import { useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Leaf, Sprout, Focus } from "lucide-react";
+import { Leaf, Sprout, Focus, Loader2 } from "lucide-react";
 import { useEmployee } from "@/context/employee-context";
 import { Bonsai } from "@/components/bonsai";
 import { MiniLeafMark } from "@/components/mini-leaf-mark";
 import { PixelMascot } from "@/components/pixel-mascot";
+import { MoodHistoryCard } from "@/components/mood-history-card";
+import { useGetEmployeeHistory, getGetEmployeeHistoryQueryKey } from "@workspace/api-client-react";
 
 import welcomeBonsai from "@assets/Happy_Wave_Bonsai_1779333623327.png";
 
@@ -33,6 +35,12 @@ export default function EmployeeWelcome() {
   }, [employee, setLocation]);
 
   if (!employee) return null;
+
+  const returning = Boolean(profile);
+  const { data: history, isLoading: isLoadingHistory } = useGetEmployeeHistory(
+    employee.id,
+    { query: { queryKey: getGetEmployeeHistoryQueryKey(employee.id), enabled: returning } },
+  );
 
   return (
     <div className="h-[100svh] w-full flex items-center justify-center bg-[#f0ede8] overflow-hidden relative px-5 sm:px-6 pt-10 sm:pt-14 pb-[calc(env(safe-area-inset-bottom)+22px)] sm:pb-14">
@@ -109,12 +117,30 @@ export default function EmployeeWelcome() {
           </p>
         </motion.div>
 
+        {/* Mood history (returning employees) */}
+        {returning ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12, duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-5 sm:mt-7 w-full flex justify-center"
+          >
+            {isLoadingHistory ? (
+              <div className="w-full max-w-md rounded-[28px] border border-white/70 bg-white/55 backdrop-blur-sm shadow-[0_18px_60px_rgba(0,0,0,0.08)] px-6 py-6 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-[#4a7c59]" />
+              </div>
+            ) : history?.checkins?.length ? (
+              <MoodHistoryCard checkins={history.checkins} title="Your week so far" />
+            ) : null}
+          </motion.div>
+        ) : null}
+
         {/* Mascot */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.14, duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mt-7 sm:mt-11"
+          transition={{ delay: returning ? 0.15 : 0.14, duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
+          className="relative mt-6 sm:mt-9"
         >
           {/* Decorative leaves */}
           <Leaf className="absolute -left-8 -top-4 w-4 h-4 sm:w-5 sm:h-5 text-[#4a7c59]/14 rotate-12" />
@@ -126,7 +152,7 @@ export default function EmployeeWelcome() {
           <Bonsai
             src={welcomeBonsai}
             alt="Charles welcoming you"
-            className="w-44 h-44 sm:w-64 sm:h-64"
+            className="w-40 h-40 sm:w-64 sm:h-64"
             floating
           />
         </motion.div>
@@ -135,8 +161,8 @@ export default function EmployeeWelcome() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.19, duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-8 sm:mt-12 w-full flex flex-col items-center"
+          transition={{ delay: returning ? 0.2 : 0.19, duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-7 sm:mt-10 w-full flex flex-col items-center"
         >
           <motion.button
             type="button"

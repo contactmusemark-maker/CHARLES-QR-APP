@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { format, subDays, addDays, startOfWeek, endOfWeek } from "date-fns";
+import { format, subDays, addDays, startOfWeek, endOfWeek, formatDistanceToNowStrict } from "date-fns";
 import {
   useGetCheckinSummary,
   useGetCheckinTrends,
@@ -62,6 +62,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import studyBonsai from "@assets/Study_-_Work_Bonsai_1779333623328.png";
 import { isAdminAuthed, setAdminAuthed } from "@/lib/admin-auth";
 import { formatLocalDateKey, getTzOffsetMinutes, isSameLocalDate } from "@/lib/dates";
+import { MoodHistoryCard } from "@/components/mood-history-card";
+import { AdminEmptyState } from "@/components/admin/admin-empty-state";
+import { DailyInsights } from "@/components/admin/daily-insights";
+import { LiveActivityFeed } from "@/components/admin/live-activity-feed";
 
 const MOOD_COLORS: Record<string, string> = {
   Great: "#4a7c59",
@@ -71,6 +75,30 @@ const MOOD_COLORS: Record<string, string> = {
   Stressed: "#d97c5a",
   Exhausted: "#8a6a6a",
 };
+
+const MOOD_ACCENTS: Record<string, string> = {
+  great: "#4a7c59",
+  good: "#6faa82",
+  calm: "#8ab5a0",
+  okay: "#b8a98a",
+  stressed: "#d97c5a",
+  exhausted: "#8a6a6a",
+};
+
+function getDominantMood(moodBreakdown?: Record<string, number> | null): string | null {
+  if (!moodBreakdown) return null;
+  let best: { k: string; v: number } | null = null;
+  for (const [k, v] of Object.entries(moodBreakdown)) {
+    if (typeof v !== "number") continue;
+    if (!best || v > best.v) best = { k, v };
+  }
+  return best?.k ?? null;
+}
+
+function accentForMood(mood?: string | null): string {
+  if (!mood) return "#4a7c59";
+  return MOOD_ACCENTS[mood] ?? "#4a7c59";
+}
 
 const MOOD_EMOJI: Record<string, string> = {
   great: "Thriving",
@@ -181,6 +209,7 @@ export default function Admin() {
   const [expandedCheckinId, setExpandedCheckinId] = useState<number | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileEmployeeId, setProfileEmployeeId] = useState<string | null>(null);
+  const [profileAvatarErrored, setProfileAvatarErrored] = useState(false);
 
   const dateParam = formatLocalDateKey(selectedDate);
   const isToday = isSameLocalDate(selectedDate, new Date());
@@ -209,11 +238,21 @@ export default function Admin() {
 
   const { data: checkins, isLoading: isLoadingCheckins } = useListCheckins(
     { date: dateParam, tzOffsetMinutes },
-    { query: { queryKey: getListCheckinsQueryKey({ date: dateParam, tzOffsetMinutes }), enabled: allowed } }
+    {
+      query: {
+        queryKey: getListCheckinsQueryKey({ date: dateParam, tzOffsetMinutes }),
+        enabled: allowed,
+        refetchInterval: isToday ? 15000 : false,
+      },
+    }
   );
 
   const activeProfileId = profileEmployeeId ?? "";
   const profileEnabled = allowed && profileOpen && Boolean(profileEmployeeId);
+
+  useEffect(() => {
+    setProfileAvatarErrored(false);
+  }, [activeProfileId]);
 
   const { data: activeProfile, isLoading: isLoadingProfile } = useGetEmployeeProfile(
     activeProfileId,
@@ -287,10 +326,21 @@ export default function Admin() {
     return "neutral";
   }, [trends]);
 
+  const dominantMood = useMemo(() => getDominantMood(summary?.moodBreakdown ?? null), [summary?.moodBreakdown]);
+  const accent = useMemo(() => accentForMood(dominantMood), [dominantMood]);
+
   if (!allowed) return null;
 
   return (
-    <div className="min-h-screen w-full bg-background/50">
+    <div className="min-h-screen w-full bg-background/50 relative overflow-x-hidden">
+      <div
+        className="absolute inset-0 pointer-events-none opacity-70"
+        style={{
+          background:
+            `radial-gradient(ellipse at 50% 0%, ${accent}18 0%, transparent 62%),` +
+            `radial-gradient(ellipse at 20% 100%, ${accent}10 0%, transparent 60%)`,
+        }}
+      />
 
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -333,7 +383,7 @@ export default function Admin() {
                     initialFocus
                     className="rounded-2xl"
                   />
-                  {!isToday && (
+	          {!isToday && (
                     <div className="px-1 pb-1">
                       <button
                         onClick={() => { setSelectedDate(new Date()); setCalendarOpen(false); }}
@@ -401,10 +451,13 @@ export default function Admin() {
                 Back to today
               </button>
             </div>
-          )}
+	          )}
 
-          {/* Top Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+	          <div className="grid xl:grid-cols-[1fr_360px] gap-6 items-start">
+	            <div className="space-y-6">
+
+	          {/* Top Stats Row */}
+	          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Wellness Score</CardTitle>
@@ -458,10 +511,17 @@ export default function Admin() {
                 <p className="text-xs text-muted-foreground mt-1">{isToday ? "Today" : "That day"}</p>
               </CardContent>
             </Card>
-          </div>
+	          </div>
 
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+	          <DailyInsights
+	            date={selectedDate}
+	            checkins={checkins ?? []}
+	            summary={summary}
+	            accent={accent}
+	          />
+
+	          {/* Charts Row */}
+	          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* Mood Distribution */}
             <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm flex flex-col">
@@ -476,11 +536,23 @@ export default function Admin() {
                   <div className="w-full h-full flex items-center justify-center">
                     <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : moodChartData.length === 0 ? (
-                  <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
-                    No check-ins for this day yet.
-                  </div>
-                ) : (
+	                ) : moodChartData.length === 0 ? (
+	                  <div className="w-full h-full flex items-center justify-center">
+	                    <div className="text-center px-6">
+	                      <div className="inline-flex items-center gap-2 rounded-full bg-white/70 border border-black/[0.05] px-3 py-1.5 shadow-sm">
+	                        <span
+	                          className="w-2 h-2 rounded-full"
+	                          style={{ backgroundColor: accent }}
+	                        />
+	                        <span className="text-xs font-semibold text-muted-foreground">
+	                          Waiting for the first check-in
+	                        </span>
+	                      </div>
+	                      <div className="mt-3 font-serif text-xl text-[#1f3a2b]">No check-ins yet</div>
+	                      <div className="mt-1 text-xs text-[#7a8b7e]">The chart will come alive as the team checks in.</div>
+	                    </div>
+	                  </div>
+	                ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={moodChartData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -552,17 +624,20 @@ export default function Admin() {
               <CardDescription>All employee submissions for this day</CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoadingCheckins ? (
-                <div className="flex items-center justify-center py-10">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : !checkins || checkins.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground text-sm">
-                  No check-ins recorded for this day.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+	              {isLoadingCheckins ? (
+	                <div className="flex items-center justify-center py-10">
+	                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+	                </div>
+	              ) : !checkins || checkins.length === 0 ? (
+	                <AdminEmptyState
+	                  date={selectedDate}
+	                  isToday={isToday}
+	                  accent={accent}
+	                  mascotSrc={studyBonsai}
+	                />
+	              ) : (
+	                <div className="overflow-x-auto">
+	                  <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground uppercase tracking-wider">
                         <th className="text-left py-2 pr-4 font-medium">Employee</th>
@@ -768,7 +843,7 @@ export default function Admin() {
           </Card>
 
           {/* Bottom Lists Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+	          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="shadow-sm border-white/40 bg-white/60 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg font-serif flex items-center gap-2">
@@ -787,17 +862,18 @@ export default function Admin() {
                           onClick={() => setLocation(`/admin/employee/${emp.employeeId}`)}
                           className="w-full flex items-center justify-between p-3 rounded-xl border bg-background/50 hover:bg-background/80 hover:border-[#d97c5a]/30 transition-all text-left group"
                         >
-                          <div>
-                            <p className="font-medium text-sm group-hover:text-[#d97c5a] transition-colors flex items-center gap-1">
-                              {emp.employeeName}
-                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
-                            </p>
-                            <p className="text-xs text-muted-foreground">{emp.employeeId}</p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            <span className="text-xs font-medium text-red-600 px-2 py-0.5 bg-red-50 rounded-full capitalize">
-                              {emp.mood}
-                            </span>
+	                          <div>
+	                            <p className="font-medium text-sm group-hover:text-[#d97c5a] transition-colors flex items-center gap-1">
+	                              {emp.employeeName}
+	                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+	                            </p>
+	                            <p className="text-xs text-muted-foreground">{emp.employeeId}</p>
+	                          </div>
+
+	                          <div className="flex flex-col items-end gap-1">
+	                            <span className="text-xs font-medium text-red-600 px-2 py-0.5 bg-red-50 rounded-full capitalize">
+	                              {emp.mood}
+	                            </span>
                             {emp.stressLevel && <span className="text-xs text-muted-foreground">Stress: {emp.stressLevel}/10</span>}
                           </div>
                         </button>
@@ -853,11 +929,33 @@ export default function Admin() {
                   </div>
                 )}
               </CardContent>
-            </Card>
-          </div>
+	            </Card>
+	          </div>
 
-        </PageTransition>
-      </main>
+	          {/* Mobile activity feed */}
+	          <div className="xl:hidden">
+	            <LiveActivityFeed
+	              checkins={checkins ?? []}
+	              accent={accent}
+	              isLive={isToday}
+	              resetKey={dateParam}
+	            />
+	          </div>
+	        </div>
+
+	        {/* Desktop activity sidebar */}
+	        <aside className="hidden xl:block xl:sticky xl:top-24 space-y-6">
+	          <LiveActivityFeed
+	            checkins={checkins ?? []}
+	            accent={accent}
+	            isLive={isToday}
+	            resetKey={dateParam}
+	          />
+	        </aside>
+	      </div>
+
+	        </PageTransition>
+	      </main>
 
       {/* Employee Profile Modal */}
       <Dialog
@@ -884,30 +982,38 @@ export default function Admin() {
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                  <div className="shrink-0">
-                    {activeProfile?.profileImageUrl ? (
-                      <img
-                        src={activeProfile.profileImageUrl}
-                        alt={`${activeProfile.fullName} avatar`}
-                        className="w-20 h-20 rounded-2xl object-cover border border-black/[0.06] shadow-sm"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-2xl bg-[#dfe7db] text-[#4a7c59] flex items-center justify-center border border-black/[0.06] shadow-sm">
-                        <span className="text-xl font-semibold">
-                          {(activeProfile?.fullName ?? activeHistory?.employeeName ?? "C")
-                            .trim()
-                            .split(/\s+/)
-                            .slice(0, 2)
-                            .map((p) => p[0])
-                            .join("")
-                            .toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+	              <div className="space-y-6">
+	                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+		                  <div className="shrink-0">
+		                    {(() => {
+		                      const avatarSrc = activeProfile?.avatarUrl ?? activeProfile?.profileImageUrl ?? null;
+		                      if (avatarSrc && !profileAvatarErrored) {
+		                        return (
+		                          <img
+		                            src={avatarSrc}
+		                            alt={`${activeProfile?.fullName ?? "Employee"} avatar`}
+		                            className="w-24 h-24 rounded-3xl object-cover border border-black/[0.06] shadow-sm"
+		                            loading="lazy"
+		                            onError={() => setProfileAvatarErrored(true)}
+		                          />
+		                        );
+		                      }
+		
+		                      return (
+		                        <div className="w-24 h-24 rounded-3xl bg-[#dfe7db] text-[#4a7c59] flex items-center justify-center border border-black/[0.06] shadow-sm">
+		                          <span className="text-2xl font-semibold">
+		                            {(activeProfile?.fullName ?? activeHistory?.employeeName ?? "C")
+		                              .trim()
+		                              .split(/\s+/)
+		                              .slice(0, 2)
+		                              .map((p) => p[0])
+		                              .join("")
+		                              .toUpperCase()}
+		                          </span>
+		                        </div>
+		                      );
+		                    })()}
+		                  </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="text-2xl font-serif leading-tight">
@@ -923,8 +1029,8 @@ export default function Admin() {
                   </div>
                 </div>
 
-                {/* Stats + mini trend */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+	                {/* Stats + mini trend */}
+	                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="rounded-2xl border bg-white/60 backdrop-blur-sm p-4 shadow-sm">
                     <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Total check-ins</div>
                     <div className="mt-1 text-2xl font-serif">
@@ -954,10 +1060,18 @@ export default function Admin() {
                       })()}
                     </div>
                   </div>
-                </div>
+	                </div>
 
-                {/* Quick actions */}
-                {profileEmployeeId && (
+	                {activeHistory?.checkins?.length ? (
+	                  <MoodHistoryCard
+	                    variant="admin"
+	                    title="Mood History Timeline"
+	                    checkins={activeHistory.checkins}
+	                  />
+	                ) : null}
+
+	                {/* Quick actions */}
+	                {profileEmployeeId && (
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
                       variant="outline"

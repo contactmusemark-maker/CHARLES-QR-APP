@@ -106,6 +106,7 @@ export default function ProfileSetup() {
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarIsCropped, setAvatarIsCropped] = useState(false);
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(profile?.avatarUrl ?? profile?.profileImageUrl ?? null);
 
   const [photoEditorOpen, setPhotoEditorOpen] = useState(false);
   const [rawPhotoUrl, setRawPhotoUrl] = useState<string | null>(null);
@@ -125,6 +126,7 @@ export default function ProfileSetup() {
     if (profile) {
       setEmail(profile.email ?? "");
       setPhone(profile.phone ?? "");
+      setUploadedAvatarUrl(profile.avatarUrl ?? profile.profileImageUrl ?? null);
     }
   }, [profile]);
 
@@ -204,7 +206,9 @@ export default function ProfileSetup() {
       }
 
       const data = (await resp.json()) as { url?: string };
-      return data.url ?? null;
+      const url = data.url ?? null;
+      if (url) setUploadedAvatarUrl(url);
+      return url;
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -270,6 +274,8 @@ export default function ProfileSetup() {
 
     try {
       const avatarUrl = await uploadAvatarIfNeeded();
+      const safeAvatarUrl =
+        avatarUrl && /^https?:\/\//i.test(avatarUrl) && !avatarUrl.startsWith("blob:") ? avatarUrl : null;
       const created = await upsertProfile.mutateAsync({
         employeeId: employeeId.trim(),
         data: {
@@ -277,7 +283,8 @@ export default function ProfileSetup() {
           department: department.trim(),
           email: email.trim() || null,
           phone: phone.trim() || null,
-          profileImageUrl: avatarUrl ?? profile?.profileImageUrl ?? null,
+          avatarUrl: safeAvatarUrl ?? profile?.avatarUrl ?? profile?.profileImageUrl ?? null,
+          profileImageUrl: safeAvatarUrl ?? profile?.profileImageUrl ?? null,
         },
       });
 
@@ -287,6 +294,7 @@ export default function ProfileSetup() {
         department: created.department ?? null,
         email: created.email ?? null,
         phone: created.phone ?? null,
+        avatarUrl: created.avatarUrl ?? created.profileImageUrl ?? null,
         profileImageUrl: created.profileImageUrl ?? null,
         createdAt: String(created.createdAt),
         updatedAt: String(created.updatedAt),

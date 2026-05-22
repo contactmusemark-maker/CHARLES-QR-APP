@@ -21,6 +21,17 @@ export const CheckInInputMood = {
   exhausted: 'exhausted',
 } as const;
 
+/**
+ * When set to update, replaces the employee's existing check-in for today (business timezone).
+ */
+export type CheckInInputIntent = typeof CheckInInputIntent[keyof typeof CheckInInputIntent];
+
+
+export const CheckInInputIntent = {
+  create: 'create',
+  update: 'update',
+} as const;
+
 export interface CheckInInput {
   employeeId: string;
   employeeName: string;
@@ -48,6 +59,8 @@ export interface CheckInInput {
   tags?: string[];
   /** @nullable */
   note?: string | null;
+  /** When set to update, replaces the employee's existing check-in for today (business timezone). */
+  intent?: CheckInInputIntent;
 }
 
 export type CheckInMood = typeof CheckInMood[keyof typeof CheckInMood];
@@ -79,6 +92,25 @@ export interface CheckIn {
   /** @nullable */
   note?: string | null;
   checkedInAt: string;
+}
+
+export type AlreadyCheckedInMood = typeof AlreadyCheckedInMood[keyof typeof AlreadyCheckedInMood];
+
+
+export const AlreadyCheckedInMood = {
+  great: 'great',
+  good: 'good',
+  okay: 'okay',
+  calm: 'calm',
+  stressed: 'stressed',
+  exhausted: 'exhausted',
+} as const;
+
+export interface AlreadyCheckedIn {
+  alreadyCheckedIn: true;
+  employeeName: string;
+  checkedInAt: string;
+  mood: AlreadyCheckedInMood;
 }
 
 export interface DepartmentStat {
@@ -125,6 +157,8 @@ export interface EmployeeProfileInput {
   /** @nullable */
   phone?: string | null;
   /** @nullable */
+  avatarUrl?: string | null;
+  /** @nullable */
   profileImageUrl?: string | null;
 }
 
@@ -138,6 +172,8 @@ export interface EmployeeProfile {
   email?: string | null;
   /** @nullable */
   phone?: string | null;
+  /** @nullable */
+  avatarUrl?: string | null;
   /** @nullable */
   profileImageUrl?: string | null;
   createdAt: string;

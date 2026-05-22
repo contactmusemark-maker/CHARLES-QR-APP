@@ -34,6 +34,16 @@ function extFromMime(mime: string): string | null {
   return null;
 }
 
+function normalizeAvatarUrl(raw?: string | null): string | null {
+  if (!raw) return null;
+  const v = raw.trim();
+  if (!v) return null;
+  if (v.startsWith("blob:")) return null;
+  if (v.startsWith("data:")) return null;
+  if (!/^https?:\/\//i.test(v)) return null;
+  return v;
+}
+
 function toApiProfile(p: {
   id: number;
   employeeId: string;
@@ -41,10 +51,12 @@ function toApiProfile(p: {
   department: string | null;
   email: string | null;
   phone: string | null;
+  avatarUrl: string | null;
   profileImageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }) {
+  const resolvedAvatarUrl = normalizeAvatarUrl(p.avatarUrl) ?? normalizeAvatarUrl(p.profileImageUrl) ?? null;
   return {
     id: p.id,
     employeeId: p.employeeId,
@@ -52,7 +64,8 @@ function toApiProfile(p: {
     department: p.department,
     email: p.email,
     phone: p.phone,
-    profileImageUrl: p.profileImageUrl,
+    avatarUrl: resolvedAvatarUrl,
+    profileImageUrl: normalizeAvatarUrl(p.profileImageUrl) ?? resolvedAvatarUrl,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   };
@@ -69,7 +82,7 @@ router.post("/profiles/:employeeId/avatar", upload.single("file"), async (req, r
   const ext = extFromMime(file.mimetype);
   if (!ext) return res.status(400).json({ error: "Unsupported file type. Use jpg, png, or webp." });
 
-  const bucket = process.env["SUPABASE_STORAGE_BUCKET"] ?? "employee-profiles";
+  const bucket = process.env["SUPABASE_STORAGE_BUCKET"] ?? "employee-avatars";
   const employeeId = params.data.employeeId.trim();
   const safeEmployeeId = employeeId.replace(/[^a-zA-Z0-9_-]/g, "_");
   const objectPath = `avatars/${safeEmployeeId}/${crypto.randomUUID()}.${ext}`;
@@ -124,6 +137,7 @@ router.put("/profiles/:employeeId", async (req, res) => {
   const existing = existingRows[0];
 
   if (!existing) {
+    const avatarUrl = normalizeAvatarUrl(data.avatarUrl ?? data.profileImageUrl);
     const [created] = await db
       .insert(employeeProfilesTable)
       .values({
@@ -132,13 +146,15 @@ router.put("/profiles/:employeeId", async (req, res) => {
         department: data.department ?? null,
         email: data.email ?? null,
         phone: data.phone ?? null,
-        profileImageUrl: data.profileImageUrl ?? null,
+        avatarUrl,
+        profileImageUrl: normalizeAvatarUrl(data.profileImageUrl) ?? avatarUrl,
       })
       .returning();
 
     return res.status(200).json(toApiProfile(created));
   }
 
+  const avatarUrl = normalizeAvatarUrl(data.avatarUrl ?? data.profileImageUrl);
   const [updated] = await db
     .update(employeeProfilesTable)
     .set({
@@ -146,7 +162,8 @@ router.put("/profiles/:employeeId", async (req, res) => {
       department: data.department ?? null,
       email: data.email ?? null,
       phone: data.phone ?? null,
-      profileImageUrl: data.profileImageUrl ?? null,
+      avatarUrl,
+      profileImageUrl: normalizeAvatarUrl(data.profileImageUrl) ?? avatarUrl,
       updatedAt: new Date(),
     })
     .where(eq(employeeProfilesTable.employeeId, employeeId))

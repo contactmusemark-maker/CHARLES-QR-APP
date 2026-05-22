@@ -17,6 +17,8 @@ export interface EmployeeProfile {
   /** @nullable */
   phone?: string | null;
   /** @nullable */
+  avatarUrl?: string | null;
+  /** @nullable */
   profileImageUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;

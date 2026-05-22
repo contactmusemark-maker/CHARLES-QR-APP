@@ -15,5 +15,7 @@ export interface EmployeeProfileInput {
   /** @nullable */
   phone?: string | null;
   /** @nullable */
+  avatarUrl?: string | null;
+  /** @nullable */
   profileImageUrl?: string | null;
 }

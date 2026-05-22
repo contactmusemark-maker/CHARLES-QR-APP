@@ -5,6 +5,7 @@
  * Charles Mood Check-In API
  * OpenAPI spec version: 0.1.0
  */
+import type { CheckInInputIntent } from './checkInInputIntent';
 import type { CheckInInputMood } from './checkInInputMood';
 
 export interface CheckInInput {
@@ -34,4 +35,6 @@ export interface CheckInInput {
   tags?: string[];
   /** @nullable */
   note?: string | null;
+  /** When set to update, replaces the employee's existing check-in for today (business timezone). */
+  intent?: CheckInInputIntent;
 }

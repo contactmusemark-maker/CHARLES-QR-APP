@@ -6,8 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './alreadyCheckedIn';
+export * from './alreadyCheckedInMood';
 export * from './checkIn';
 export * from './checkInInput';
+export * from './checkInInputIntent';
 export * from './checkInInputMood';
 export * from './checkInMood';
 export * from './checkInSummary';

@@ -60,8 +60,28 @@ export const CreateCheckinBody = zod.object({
   "focusLevel": zod.number().min(1).max(createCheckinBodyFocusLevelMax).nullish(),
   "stressLevel": zod.number().min(1).max(createCheckinBodyStressLevelMax).nullish(),
   "tags": zod.array(zod.string()).optional(),
-  "note": zod.string().nullish()
+  "note": zod.string().nullish(),
+  "intent": zod.enum(['create', 'update']).optional().describe('When set to update, replaces the employee\'s existing check-in for today (business timezone).')
 })
+
+export const CreateCheckinResponse = zod.union([zod.object({
+  "id": zod.number(),
+  "employeeId": zod.string(),
+  "employeeName": zod.string(),
+  "department": zod.string().nullish(),
+  "mood": zod.enum(['great', 'good', 'okay', 'calm', 'stressed', 'exhausted']),
+  "energyLevel": zod.number().nullish(),
+  "focusLevel": zod.number().nullish(),
+  "stressLevel": zod.number().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "note": zod.string().nullish(),
+  "checkedInAt": zod.coerce.date()
+}),zod.object({
+  "alreadyCheckedIn": zod.literal(true),
+  "employeeName": zod.string(),
+  "checkedInAt": zod.coerce.date(),
+  "mood": zod.enum(['great', 'good', 'okay', 'calm', 'stressed', 'exhausted'])
+})])
 
 
 /**
@@ -177,6 +197,7 @@ export const GetEmployeeProfileResponse = zod.object({
   "department": zod.string().nullish(),
   "email": zod.string().nullish(),
   "phone": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
   "profileImageUrl": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date(),
@@ -196,6 +217,7 @@ export const UpsertEmployeeProfileBody = zod.object({
   "department": zod.string().nullish(),
   "email": zod.string().nullish(),
   "phone": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
   "profileImageUrl": zod.string().nullish()
 })
 
@@ -206,6 +228,7 @@ export const UpsertEmployeeProfileResponse = zod.object({
   "department": zod.string().nullish(),
   "email": zod.string().nullish(),
   "phone": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
   "profileImageUrl": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date(),

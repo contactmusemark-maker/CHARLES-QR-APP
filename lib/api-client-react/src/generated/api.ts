@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AlreadyCheckedIn,
   CheckIn,
   CheckInInput,
   CheckInSummary,
@@ -218,9 +219,9 @@ export const getCreateCheckinUrl = () => {
 /**
  * @summary Submit a mood check-in
  */
-export const createCheckin = async (checkInInput: CheckInInput, options?: RequestInit): Promise<CheckIn> => {
+export const createCheckin = async (checkInInput: CheckInInput, options?: RequestInit): Promise<CheckIn | AlreadyCheckedIn> => {
 
-  return customFetch<CheckIn>(getCreateCheckinUrl(),
+  return customFetch<CheckIn | AlreadyCheckedIn>(getCreateCheckinUrl(),
   {
     ...options,
     method: 'POST',

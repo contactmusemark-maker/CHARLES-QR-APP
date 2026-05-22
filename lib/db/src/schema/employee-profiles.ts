@@ -11,6 +11,7 @@ export const employeeProfilesTable = pgTable(
     department: text("department"),
     email: text("email"),
     phone: text("phone"),
+    avatarUrl: text("avatar_url"),
     profileImageUrl: text("profile_image_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

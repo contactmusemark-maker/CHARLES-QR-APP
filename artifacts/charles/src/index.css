@@ -195,3 +195,11 @@
 .dark .glass-card {
   @apply bg-black/50 backdrop-blur-md border border-white/10 shadow-md;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

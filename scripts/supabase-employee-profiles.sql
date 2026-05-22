@@ -11,10 +11,15 @@ CREATE TABLE IF NOT EXISTS employee_profiles (
   department         TEXT,
   email              TEXT,
   phone              TEXT,
+  avatar_url         TEXT,
   profile_image_url  TEXT,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Backfill / ensure column exists for existing deployments
+ALTER TABLE employee_profiles
+  ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
 -- Auto-update updated_at on row updates
 CREATE OR REPLACE FUNCTION public.set_updated_at()
@@ -65,4 +70,3 @@ SELECT
 FROM pg_policies
 WHERE tablename = 'employee_profiles'
 ORDER BY policyname;
-

@@ -12,6 +12,7 @@ export interface EmployeeProfile {
   department: string | null;
   email: string | null;
   phone: string | null;
+  avatarUrl: string | null;
   profileImageUrl: string | null;
   createdAt?: string;
   updatedAt?: string;

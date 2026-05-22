@@ -95,6 +95,7 @@ export default function Welcome() {
           department?: string | null;
           email?: string | null;
           phone?: string | null;
+          avatarUrl?: string | null;
           profileImageUrl?: string | null;
           createdAt?: string;
           updatedAt?: string;
@@ -106,6 +107,7 @@ export default function Welcome() {
           department: p.department ?? null,
           email: p.email ?? null,
           phone: p.phone ?? null,
+          avatarUrl: p.avatarUrl ?? p.profileImageUrl ?? null,
           profileImageUrl: p.profileImageUrl ?? null,
           createdAt: p.createdAt,
           updatedAt: p.updatedAt,

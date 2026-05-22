@@ -63,12 +63,14 @@ paths:
             schema:
               $ref: "#/components/schemas/CheckInInput"
       responses:
-        "201":
-          description: Check-in created
+        "200":
+          description: Check-in created (or already checked in)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CheckIn"
+                oneOf:
+                  - $ref: "#/components/schemas/CheckIn"
+                  - $ref: "#/components/schemas/AlreadyCheckedIn"
 
   /checkins/summary:
     get:
@@ -226,6 +228,10 @@ components:
             type: string
         note:
           type: ["string", "null"]
+        intent:
+          type: string
+          enum: [create, update]
+          description: When set to update, replaces the employee's existing check-in for today (business timezone).
 
     CheckIn:
       type: object
@@ -257,6 +263,22 @@ components:
         checkedInAt:
           type: string
           format: date-time
+
+    AlreadyCheckedIn:
+      type: object
+      required: [alreadyCheckedIn, employeeName, checkedInAt, mood]
+      properties:
+        alreadyCheckedIn:
+          type: boolean
+          enum: [true]
+        employeeName:
+          type: string
+        checkedInAt:
+          type: string
+          format: date-time
+        mood:
+          type: string
+          enum: [great, good, okay, calm, stressed, exhausted]
 
     DepartmentStat:
       type: object
@@ -341,6 +363,8 @@ components:
           type: ["string", "null"]
         phone:
           type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
         profileImageUrl:
           type: ["string", "null"]
 
@@ -359,6 +383,8 @@ components:
         email:
           type: ["string", "null"]
         phone:
+          type: ["string", "null"]
+        avatarUrl:
           type: ["string", "null"]
         profileImageUrl:
           type: ["string", "null"]
