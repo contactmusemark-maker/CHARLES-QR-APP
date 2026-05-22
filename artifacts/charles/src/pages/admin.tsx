@@ -57,6 +57,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Settings,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -67,6 +68,7 @@ import { MoodHistoryCard } from "@/components/mood-history-card";
 import { AdminEmptyState } from "@/components/admin/admin-empty-state";
 import { DailyInsights } from "@/components/admin/daily-insights";
 import { LiveActivityFeed } from "@/components/admin/live-activity-feed";
+import { AdminSettingsDialog } from "@/components/admin/admin-settings-dialog";
 
 const MOOD_COLORS: Record<string, string> = {
   Great: "#4a7c59",
@@ -206,6 +208,7 @@ export default function Admin() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [expandedCheckinId, setExpandedCheckinId] = useState<number | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -418,22 +421,48 @@ export default function Admin() {
               </button>
             )}
 
-            <Button variant="outline" size="sm" onClick={() => setReportOpen(true)}
-              className="h-8 rounded-lg gap-1.5 text-xs px-3 border-blue-200 text-blue-700 hover:bg-blue-50">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReportOpen(true)}
+              className="h-9 w-9 p-0 rounded-2xl border-blue-200 text-blue-700 hover:bg-blue-50 md:h-8 md:w-auto md:px-3 md:rounded-lg md:gap-1.5 md:text-xs"
+              title="Email report"
+            >
               <Mail className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Report</span>
             </Button>
 
-            <Button variant="outline" size="sm" onClick={() => setLocation("/poster")}
-              className="h-8 rounded-lg gap-1.5 text-xs px-3 border-[#4a7c59]/30 text-[#4a7c59] hover:bg-[#4a7c59]/10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLocation("/poster")}
+              className="h-9 w-9 p-0 rounded-2xl border-[#4a7c59]/30 text-[#4a7c59] hover:bg-[#4a7c59]/10 md:h-8 md:w-auto md:px-3 md:rounded-lg md:gap-1.5 md:text-xs"
+              title="QR poster"
+            >
               <QrCode className="w-3.5 h-3.5" />
               <span className="hidden md:inline">QR</span>
             </Button>
 
-            <Button variant="ghost" size="sm" onClick={handleSignOut}
-              className="h-8 rounded-lg gap-1.5 text-xs px-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSignOut}
+              className="h-9 w-9 p-0 rounded-2xl border-border/60 hover:bg-background md:h-8 md:w-auto md:px-3 md:rounded-lg md:gap-1.5 md:text-xs md:border-0 md:hover:bg-transparent"
+              title="Sign out"
+            >
               <LogOut className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Out</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSettingsOpen(true)}
+              className="h-9 w-9 p-0 rounded-2xl border-border/60 hover:bg-background md:h-8 md:w-auto md:px-3 md:rounded-lg md:gap-1.5 md:text-xs"
+              title="Settings"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Settings</span>
             </Button>
           </div>
         </div>
@@ -1266,7 +1295,7 @@ export default function Admin() {
 	        </PageTransition>
 	      </main>
 
-      {/* Employee Profile Modal */}
+	      {/* Employee Profile Modal */}
       <Dialog
         open={profileOpen}
         onOpenChange={(open) => {
@@ -1450,7 +1479,10 @@ export default function Admin() {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
-    </div>
-  );
+	      </Dialog>
+
+	      {/* Settings */}
+	      <AdminSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+	    </div>
+	  );
 }
