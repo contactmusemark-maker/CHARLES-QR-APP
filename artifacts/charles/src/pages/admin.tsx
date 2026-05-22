@@ -348,37 +348,41 @@ export default function Admin() {
         }}
       />
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-16 items-center justify-between px-4 md:px-6 max-w-7xl mx-auto gap-3">
-          {/* Left: brand */}
-          <div className="flex items-center gap-3 shrink-0">
-            <Bonsai src={studyBonsai} alt="Charles working" className="w-12 h-12 md:w-14 md:h-14 shrink-0" floating={false} />
-            <span className="text-base font-serif font-medium tracking-tight whitespace-nowrap">Charles Admin</span>
-          </div>
+	      {/* Header */}
+	      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+	        <div className="flex h-16 items-center justify-between px-4 md:px-6 max-w-7xl mx-auto gap-3">
+	          {/* Left: brand */}
+	          <div className="flex items-center shrink-0">
+	            <Bonsai
+	              src={studyBonsai}
+	              alt="Charles"
+	              className="w-11 h-11 md:w-12 md:h-12 shrink-0"
+	              floating={false}
+	            />
+	          </div>
 
-          {/* Right: actions */}
-          <div className="flex items-center gap-1.5 shrink-0">
+	          {/* Right: actions */}
+	          <div className="flex items-center gap-2 shrink-0 overflow-x-auto no-scrollbar">
 
-            {/* Date nav: ← [Date clickable] → */}
-            <div className="flex items-center gap-0.5 bg-muted/60 rounded-lg p-0.5 border border-border/50">
-              <button
-                onClick={() => setSelectedDate(d => subDays(d, 1))}
-                className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-background transition-colors"
-                title="Previous day"
-              >
-                <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-              </button>
+	            {/* Date nav: ← [Date clickable] → */}
+	            <div className="flex items-center gap-0.5 bg-muted/60 rounded-2xl p-0.5 border border-border/50 h-9 shrink-0">
+	              <button
+	                onClick={() => setSelectedDate(d => subDays(d, 1))}
+	                className="h-8 w-8 flex items-center justify-center rounded-xl hover:bg-background transition-colors"
+	                title="Previous day"
+	              >
+	                <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+	              </button>
 
               {/* Clickable date — opens calendar picker */}
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <button className="flex items-center gap-1.5 px-2 h-7 rounded-md hover:bg-background transition-colors group">
-                    <CalendarIcon className="w-3 h-3 text-muted-foreground/70 group-hover:text-[#4a7c59] transition-colors" />
-                    <span className="text-xs font-medium whitespace-nowrap tabular-nums group-hover:text-[#4a7c59] transition-colors">
-                      {isToday ? "Today" : format(selectedDate, "MMM d")}
-                    </span>
-                  </button>
+	              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+	                <PopoverTrigger asChild>
+	                  <button className="flex items-center gap-1.5 px-2.5 h-8 rounded-xl hover:bg-background transition-colors group">
+	                    <CalendarIcon className="w-3 h-3 text-muted-foreground/70 group-hover:text-[#4a7c59] transition-colors" />
+	                    <span className="text-xs font-medium whitespace-nowrap tabular-nums group-hover:text-[#4a7c59] transition-colors">
+	                      {isToday ? "Today" : format(selectedDate, "MMM d")}
+	                    </span>
+	                  </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto max-w-[calc(100vw-1.5rem)] p-2 shadow-xl rounded-2xl border-border/50" align="center" sideOffset={8}>
                   <Calendar
@@ -402,24 +406,24 @@ export default function Admin() {
                 </PopoverContent>
               </Popover>
 
-              <button
-                onClick={() => setSelectedDate(d => addDays(d, 1))}
-                disabled={isToday}
-                className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-background transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Next day"
-              >
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </button>
-            </div>
+	              <button
+	                onClick={() => setSelectedDate(d => addDays(d, 1))}
+	                disabled={isToday}
+	                className="h-8 w-8 flex items-center justify-center rounded-xl hover:bg-background transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+	                title="Next day"
+	              >
+	                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+	              </button>
+	            </div>
 
-            {!isToday && (
-              <button
-                onClick={() => setSelectedDate(new Date())}
-                className="h-7 px-2.5 text-[11px] font-semibold rounded-lg bg-[#4a7c59] text-white hover:bg-[#3d6b4a] transition-colors"
-              >
-                Today
-              </button>
-            )}
+	            {!isToday && (
+	              <button
+	                onClick={() => setSelectedDate(new Date())}
+	                className="h-9 px-3 text-[11px] font-semibold rounded-2xl bg-[#4a7c59] text-white hover:bg-[#3d6b4a] transition-colors shrink-0"
+	              >
+	                Today
+	              </button>
+	            )}
 
             <Button
               variant="outline"
