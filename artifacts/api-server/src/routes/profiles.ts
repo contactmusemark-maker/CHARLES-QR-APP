@@ -27,6 +27,15 @@ function getSupabase() {
   });
 }
 
+function getSupabaseOptional() {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  if (!url || !key) return null;
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 function extFromMime(mime: string): string | null {
   if (mime === "image/jpeg") return "jpg";
   if (mime === "image/png") return "png";
@@ -44,7 +53,34 @@ function normalizeAvatarUrl(raw?: string | null): string | null {
   return v;
 }
 
-function toApiProfile(p: {
+function parseSupabasePublicObjectUrl(url: string) {
+  // Example:
+  // https://<ref>.supabase.co/storage/v1/object/public/<bucket>/<path>
+  const m = url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
+  if (!m) return null;
+  return { bucket: m[1] ?? "", path: m[2] ?? "" };
+}
+
+async function toMaybeSignedUrl(
+  supabase: ReturnType<typeof getSupabaseOptional>,
+  url: string,
+): Promise<string> {
+  if (!supabase) return url;
+  const parsed = parseSupabasePublicObjectUrl(url);
+  if (!parsed) return url;
+  if (!parsed.bucket || !parsed.path) return url;
+
+  // Even if the bucket is public, signed URLs still work and avoid "bucket privacy" issues.
+  const { data, error } = await supabase.storage.from(parsed.bucket).createSignedUrl(parsed.path, 60 * 60); // 1 hour
+  if (error || !data?.signedUrl) return url;
+
+  // Supabase returns a path-like URL for signed URLs; ensure it is absolute.
+  if (/^https?:\/\//i.test(data.signedUrl)) return data.signedUrl;
+  const base = process.env["SUPABASE_URL"]?.replace(/\/+$/, "");
+  return base ? `${base}${data.signedUrl.startsWith("/") ? "" : "/"}${data.signedUrl}` : url;
+}
+
+async function toApiProfile(p: {
   id: number;
   employeeId: string;
   fullName: string;
@@ -56,7 +92,9 @@ function toApiProfile(p: {
   createdAt: Date;
   updatedAt: Date;
 }) {
+  const supabase = getSupabaseOptional();
   const resolvedAvatarUrl = normalizeAvatarUrl(p.avatarUrl) ?? normalizeAvatarUrl(p.profileImageUrl) ?? null;
+  const signedAvatarUrl = resolvedAvatarUrl ? await toMaybeSignedUrl(supabase, resolvedAvatarUrl) : null;
   return {
     id: p.id,
     employeeId: p.employeeId,
@@ -64,7 +102,7 @@ function toApiProfile(p: {
     department: p.department,
     email: p.email,
     phone: p.phone,
-    avatarUrl: resolvedAvatarUrl,
+    avatarUrl: signedAvatarUrl ?? resolvedAvatarUrl,
     profileImageUrl: normalizeAvatarUrl(p.profileImageUrl) ?? resolvedAvatarUrl,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
@@ -115,7 +153,7 @@ router.get("/profiles/:employeeId", async (req, res) => {
   const row = rows[0];
 
   if (!row) return res.status(404).json({ error: "Profile not found" });
-  return res.json(toApiProfile(row));
+  return res.json(await toApiProfile(row));
 });
 
 // PUT /profiles/:employeeId
@@ -151,7 +189,7 @@ router.put("/profiles/:employeeId", async (req, res) => {
       })
       .returning();
 
-    return res.status(200).json(toApiProfile(created));
+    return res.status(200).json(await toApiProfile(created));
   }
 
   const avatarUrl = normalizeAvatarUrl(data.avatarUrl ?? data.profileImageUrl);
@@ -169,7 +207,7 @@ router.put("/profiles/:employeeId", async (req, res) => {
     .where(eq(employeeProfilesTable.employeeId, employeeId))
     .returning();
 
-  return res.status(200).json(toApiProfile(updated));
+  return res.status(200).json(await toApiProfile(updated));
 });
 
 export default router;
